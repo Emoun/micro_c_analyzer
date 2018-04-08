@@ -1,0 +1,19 @@
+[package]
+name = "micro_c_analyzer"
+version = "0.1.0"
+authors = ["Emad Jacob Maroun <emoun.open@gmail.com>"]
+
+build = "build.rs" # Allows running LALRPOP as a preprocessing step
+
+[lib]
+name = "analyzer"
+path = "src/lib.rs"
+
+
+[build-dependencies]
+lalrpop = "0.15"
+
+[dependencies]
+lalrpop-util = "0.15"
+regex = "0.2.1" # Required by LALRPOP if we dont want to write the lexer by hand
+

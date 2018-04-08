@@ -1,8 +1,8 @@
 
 #[derive(Debug)]
 pub struct Block<'a> {
-	declarations: Option<Box<Declaration<'a>>>,
-	statements: Box<Statement<'a>>,
+	pub(crate) declarations: Option<Box<Declaration<'a>>>,
+	pub(crate) statements: Box<Statement<'a>>,
 }
 
 impl<'a> Block<'a> {

@@ -3,7 +3,8 @@ use micro_c::{
 	Block, Declaration,
 	Statement, Statement::*,
 	Expression, Expression::*,
-	Type, BinaryOperator, UnaryOperator};
+	Type, BinaryOperator, UnaryOperator
+};
 
 pub trait AstVisitor{
 //Enter methods
@@ -63,6 +64,10 @@ pub trait AstVisitor{
 	fn exit_expression_unary(&mut self, op: UnaryOperator, rhs: &Expression){}
 	
 //Visit methods
+	fn visit(&mut self, ast: &Block){
+		self.visit_block(ast);
+	}
+
 	fn visit_block(&mut self, block: &Block){
 		self.enter_block(block);
 		if let Some(ref decl) = block.declarations {

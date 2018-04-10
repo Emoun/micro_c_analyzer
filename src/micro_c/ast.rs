@@ -1,5 +1,5 @@
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Block<'a> {
 	pub(crate) declarations: Option<Box<Declaration<'a>>>,
 	pub(crate) statements: Box<Statement<'a>>,
@@ -12,14 +12,14 @@ impl<'a> Block<'a> {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Declaration<'a> {
 	Variable(Type, &'a str),
 	Array(Type, &'a str, i32),
 	Composite(Box<Declaration<'a>>, Box<Declaration<'a>>)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Statement<'a> {
 	Assign(&'a str, Box<Expression<'a>>),
 	AssignArray(&'a str, Box<Expression<'a>>, Box<Expression<'a>>),
@@ -34,7 +34,7 @@ pub enum Statement<'a> {
 	Composite(Box<Statement<'a>>, Box<Statement<'a>>)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Expression<'a> {
 	Constant(i32),
 	Variable(&'a str),
@@ -43,13 +43,13 @@ pub enum Expression<'a> {
 	Unary(UnaryOperator, Box<Expression<'a>>)
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Type {
 	Int,
 	Void
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum BinaryOperator {
 	Plus,
 	Minus,
@@ -65,7 +65,7 @@ pub enum BinaryOperator {
 	Or
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum UnaryOperator {
 	Negative,
 	Not

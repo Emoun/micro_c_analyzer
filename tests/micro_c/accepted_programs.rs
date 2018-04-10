@@ -22,13 +22,14 @@ fn simple_if(){
 			declarations: \
 				None, \
 			statements: \
-				If(\
+				IfElse(\
 					Constant(1), \
 					Block { \
 						declarations: None, \
 						statements: \
 							Assign(\"x\", Constant(4)) \
-					}\
+					}, \
+					None\
 				) \
 		}",
 		format!("{:?}",ProgramParser::new().parse("{if(1){x=4;}}").unwrap()));
@@ -48,11 +49,13 @@ fn simple_if_else(){
 						statements: \
 							Assign(\"x\", Constant(2)) \
 					}, \
-					Block { \
-						declarations: None, \
-						statements: \
-							Assign(\"y\", Constant(3)) \
-					}\
+					Some(\
+						Block { \
+							declarations: None, \
+							statements: \
+								Assign(\"y\", Constant(3)) \
+						}\
+					)\
 				) \
 		}",
 		format!("{:?}",ProgramParser::new().parse("{if(1){x=2;}else{y=3;}}").unwrap()));
@@ -157,7 +160,7 @@ fn compisite_declaration(){
 
 #[test]
 fn block_statement(){
-	assert_eq!("Block { declarations: None, statements: Block(Block { declarations: None, statements: Break }) }",
+	assert_eq!("Block { declarations: None, statements: Scope(Block { declarations: None, statements: Break }) }",
 			   format!("{:?}",ProgramParser::new().parse("{{break;}}").unwrap()));
 	
 }

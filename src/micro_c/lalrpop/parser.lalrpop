@@ -37,11 +37,11 @@ Statements: Box<Statement<'input>> = {
 
 SingleStatement: Statement<'input> = {
     <SimpleStatements> SEMI => <>,
-    IF LPAREN <e: Expression> RPAREN <b: Block> => Statement::If(e,Box::new(b)),
+    IF LPAREN <e: Expression> RPAREN <b: Block> => Statement::IfElse(e,Box::new(b), None),
     IF LPAREN <e: Expression> RPAREN <b_then: Block> ELSE <b_else: Block>
-        => Statement::IfElse(e,Box::new(b_then),Box::new(b_else)),
+        => Statement::IfElse(e,Box::new(b_then),Some(Box::new(b_else))),
     WHILE LPAREN <e: Expression> RPAREN <b: Block> => Statement::While(e,Box::new(b)),
-    Block => Statement::Block(Box::new(<>)),
+    Block => Statement::Scope(Box::new(<>)),
 };
 
 SimpleStatements: Statement<'input> = {

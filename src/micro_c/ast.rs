@@ -23,9 +23,8 @@ pub enum Declaration<'a> {
 pub enum Statement<'a> {
 	Assign(&'a str, Box<Expression<'a>>),
 	AssignArray(&'a str, Box<Expression<'a>>, Box<Expression<'a>>),
-	Block(Box<Block<'a>>),
-	If(Box<Expression<'a>>, Box<Block<'a>>),
-	IfElse(Box<Expression<'a>>, Box<Block<'a>>, Box<Block<'a>>),
+	Scope(Box<Block<'a>>),
+	IfElse(Box<Expression<'a>>, Box<Block<'a>>, Option<Box<Block<'a>>>),
 	While(Box<Expression<'a>>, Box<Block<'a>>),
 	Read(&'a str),
 	ReadArray(&'a str, Box<Expression<'a>>),
@@ -44,13 +43,13 @@ pub enum Expression<'a> {
 	Unary(UnaryOperator, Box<Expression<'a>>)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Type {
 	Int,
 	Void
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum BinaryOperator {
 	Plus,
 	Minus,
@@ -66,7 +65,7 @@ pub enum BinaryOperator {
 	Or
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum UnaryOperator {
 	Negative,
 	Not

@@ -4,7 +4,7 @@ use micro_c::{
 	Type,
 };
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Action<'a>{
 	Assign(&'a str, &'a Expression<'a>),
 	AssignArray(&'a str, &'a Expression<'a>, &'a Expression<'a>),

@@ -4,6 +4,7 @@ use graphene::core::*;
 use graphene::common::*;
 use micro_c::program_graph::Action;
 
-//type ProgramGraph<'a> = AdjListGraph<u32, Action<'a>>;
-
-
+custom_graph!{
+	pub struct ProgramGraph<'a>
+	as AdjListGraph<u32, Action<'a>>
+}

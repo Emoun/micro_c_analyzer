@@ -1,8 +1,9 @@
 
 use analyzer::micro_c::{
 	ProgramGraph, Action, Action::*, Type::Int,
-	Expression, BinaryOperator, UnaryOperator};
-use graphene::core::{BaseGraph, BaseEdge as Edge};
+	Expression, BinaryOperator, UnaryOperator,
+	Statement};
+use std::rc::Rc;
 
 const P1: &'static str =
 	"{
@@ -26,23 +27,60 @@ const P1: &'static str =
 		read z;
 	}";
 
-fn p1_program_graph<'a>()-> (Vec<Edge<u32, Action<'a>>>, Vec<Box<Expression<'a>>>){
+fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	
-	let mut edges = Vec::new();
-	let mut expr = Vec::new();
+	let mut g = ProgramGraph::new();
+	let mut v = Vec::new();
+	for i in 0..18{
+		v[i] = g.add_node(());
+	}
 	
-	edges.push(Edge::new(0,3,DeclareVariable(Int, "i")));
-	edges.push(Edge::new(3,4,DeclareVariable(Int, "x")));
-	edges.push(Edge::new(4,5,DeclareVariable(Int, "y")));
-	edges.push(Edge::new(5,6,DeclareVariable(Int, "z")));
-	edges.push(Edge::new(6,2,DeclareArray(Int, "z", 10)));
+	let e_0 = Rc::new(Expression::Constant(0));
+	let e_1 = Rc::new(Expression::Constant(1));
+	let e_10 = Rc::new(Expression::Constant(10));
+	let e_i = Rc::new(Expression::Variable("i"));
+	let e_x = Rc::new(Expression::Variable("x"));
+	let e_y = Rc::new(Expression::Variable("y"));
+	let e_i_lt_10 = Rc::new(Expression::Binary(e_i.clone(), BinaryOperator::LessThan, e_10.clone()));
+	let e_i_ge_10 = Rc::new(Expression::Unary(UnaryOperator::Not, e_i_lt_10.clone()));
+	let e_i_plus_1 = Rc::new(Expression::Binary(e_i.clone(), BinaryOperator::Plus, e_1.clone()));
+	let e_A_i = Rc::new(Expression::ArrayAccess("A", e_i.clone()));
+	let e_A_i_plus_1 = Rc::new(Expression::Binary(e_A_i.clone(), BinaryOperator::Plus, e_1.clone()));
+	let e_A_i_plus_1_ge_0 = Rc::new(Expression::Binary(
+			e_A_i_plus_1.clone(), BinaryOperator::GreaterOrEqual, e_0.clone()));
+	let e_A_i_plus_1_lt_0 = Rc::new(Expression::Unary(UnaryOperator::Not, e_A_i_plus_1_ge_0.clone()));
+	let r_x_plus_A_i = Rc::new(Expression::Binary(e_x.clone(), BinaryOperator::Plus, e_A_i.clone()));
+	let e_y_plus_1 = Rc::new(Expression::Binary(e_y.clone(), BinaryOperator::Plus, e_1.clone()));
+	let r_x_div_y = Rc::new(Expression::Binary(e_x.clone(), BinaryOperator::Division, e_y.clone()));
 	
-	let e_10 = Box::new(Expression::Constant(10));
-	let e_i = Box::new(Expression::Variable("i"));
-	let e_i_lt_10 = Box::new(Expression::Binary(e_i, BinaryOperator::LessThan, e_10));
-	expr.push(Box::new(Expression::Unary(UnaryOperator::Not, e_i_lt_10)));
+	let inc_i = Assign("i", e_i_plus_1);
+	let whileCond = Condition(e_i_lt_10.clone());
+	let whileNotCond = Condition(e_i_ge_10.clone());
+	let ifCond = Condition(e_A_i_plus_1_ge_0.clone());
+	let ifNotCond = Condition(e_A_i_plus_1_lt_0.clone());
+	let x_ass_x_plus_A_i = Assign("x", r_x_plus_A_i);
+	let inc_y = Assign("y", e_y_plus_1);
+	let write_x_div_y = Write(r_x_div_y);
 	
-	edges.push(Edge::new(2,8,Condition(expr[0].as_ref())));
-	
-	(edges, expr)
+	g.add_edge(v[0],v[3],DeclareVariable(Int, "i"));
+	g.add_edge(v[3],v[4],DeclareVariable(Int, "x"));
+	g.add_edge(v[4],v[5],DeclareVariable(Int, "y"));
+	g.add_edge(v[5],v[6],DeclareVariable(Int, "z"));
+	g.add_edge(v[6],v[2],DeclareArray(Int, "A", 10));
+	g.add_edge(v[2],v[8], whileCond.clone());
+	g.add_edge(v[2],v[7],whileNotCond.clone());
+	g.add_edge(v[8],v[9],ReadArray("A", e_i.clone()));
+	g.add_edge(v[9],v[2],inc_i.clone());
+	g.add_edge(v[7],v[10], whileNotCond.clone());
+	g.add_edge(v[7],v[11], whileCond.clone());
+	g.add_edge(v[11],v[13], ifCond);
+	g.add_edge(v[11],v[14], ifNotCond);
+	g.add_edge(v[13],v[15], x_ass_x_plus_A_i);
+	g.add_edge(v[15],v[12],inc_i.clone());
+	g.add_edge(v[14],v[16],inc_i.clone());
+	g.add_edge(v[16],v[10],Skip);
+	g.add_edge(v[12],v[7],inc_y.clone());
+	g.add_edge(v[10],v[17],write_x_div_y);
+	g.add_edge(v[17],v[1],Read("z"));
+	g
 }

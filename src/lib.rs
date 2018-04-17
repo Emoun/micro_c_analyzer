@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate graphene;
+extern crate petgraph;
 
 pub mod micro_c;
 

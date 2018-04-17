@@ -1,46 +1,48 @@
 
-#[derive(Debug, Eq, PartialEq)]
+use std::rc::Rc;
+
+#[derive(Clone,Debug, Eq, PartialEq)]
 pub struct Block<'a> {
-	pub(crate) declarations: Option<Box<Declaration<'a>>>,
-	pub(crate) statements: Box<Statement<'a>>,
+	pub(crate) declarations: Option<Rc<Declaration<'a>>>,
+	pub(crate) statements: Rc<Statement<'a>>,
 }
 
 impl<'a> Block<'a> {
-	pub fn new(declarations: Option<Box<Declaration<'a>>>, statements: Box<Statement<'a>>) -> Self
+	pub fn new(declarations: Option<Rc<Declaration<'a>>>, statements: Rc<Statement<'a>>) -> Self
 	{
 		Block{declarations, statements}
 	}
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone,Debug, Eq, PartialEq)]
 pub enum Declaration<'a> {
 	Variable(Type, &'a str),
 	Array(Type, &'a str, i32),
-	Composite(Box<Declaration<'a>>, Box<Declaration<'a>>)
+	Composite(Rc<Declaration<'a>>, Rc<Declaration<'a>>)
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone,Debug, Eq, PartialEq)]
 pub enum Statement<'a> {
-	Assign(&'a str, Box<Expression<'a>>),
-	AssignArray(&'a str, Box<Expression<'a>>, Box<Expression<'a>>),
-	Scope(Box<Block<'a>>),
-	IfElse(Box<Expression<'a>>, Box<Block<'a>>, Option<Box<Block<'a>>>),
-	While(Box<Expression<'a>>, Box<Block<'a>>),
+	Assign(&'a str, Rc<Expression<'a>>),
+	AssignArray(&'a str, Rc<Expression<'a>>, Rc<Expression<'a>>),
+	Scope(Rc<Block<'a>>),
+	IfElse(Rc<Expression<'a>>, Rc<Block<'a>>, Option<Rc<Block<'a>>>),
+	While(Rc<Expression<'a>>, Rc<Block<'a>>),
 	Read(&'a str),
-	ReadArray(&'a str, Box<Expression<'a>>),
-	Write(Box<Expression<'a>>),
+	ReadArray(&'a str, Rc<Expression<'a>>),
+	Write(Rc<Expression<'a>>),
 	Break,
 	Continue,
-	Composite(Box<Statement<'a>>, Box<Statement<'a>>)
+	Composite(Rc<Statement<'a>>, Rc<Statement<'a>>)
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone,Debug, Eq, PartialEq)]
 pub enum Expression<'a> {
 	Constant(i32),
 	Variable(&'a str),
-	ArrayAccess(&'a str, Box<Expression<'a>>),
-	Binary(Box<Expression<'a>>, BinaryOperator, Box<Expression<'a>>),
-	Unary(UnaryOperator, Box<Expression<'a>>)
+	ArrayAccess(&'a str, Rc<Expression<'a>>),
+	Binary(Rc<Expression<'a>>, BinaryOperator, Rc<Expression<'a>>),
+	Unary(UnaryOperator, Rc<Expression<'a>>)
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

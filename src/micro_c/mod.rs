@@ -7,3 +7,4 @@ mod program_graph;
 pub use self::lalrpop::*;
 pub use self::ast::*;
 pub use self::ast_visitor::*;
+pub use self::program_graph::*;

@@ -1,4 +1,5 @@
 
 mod accepted_programs;
 mod rejected_programs;
-mod programs;
+pub mod programs;
+mod grapher;

@@ -1,11 +1,10 @@
 
 use analyzer::micro_c::{
-	ProgramGraph, Action, Action::*, Type::Int,
-	Expression, BinaryOperator, UnaryOperator,
-	Statement};
+	ProgramGraph, Action::*, Type::Int,
+	Expression, BinaryOperator, UnaryOperator};
 use std::rc::Rc;
 
-const P1: &'static str =
+pub const P1: &'static str =
 	"{
 		int i; int x; int y; int z;
 		int A[10];
@@ -27,12 +26,12 @@ const P1: &'static str =
 		read z;
 	}";
 
-fn p1_program_graph<'a>() -> ProgramGraph<'a> {
+pub fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	
 	let mut g = ProgramGraph::new();
 	let mut v = Vec::new();
 	for i in 0..18{
-		v[i] = g.add_node(());
+		v.push(g.add_node(()));
 	}
 	
 	let e_0 = Rc::new(Expression::Constant(0));
@@ -44,21 +43,21 @@ fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	let e_i_lt_10 = Rc::new(Expression::Binary(e_i.clone(), BinaryOperator::LessThan, e_10.clone()));
 	let e_i_ge_10 = Rc::new(Expression::Unary(UnaryOperator::Not, e_i_lt_10.clone()));
 	let e_i_plus_1 = Rc::new(Expression::Binary(e_i.clone(), BinaryOperator::Plus, e_1.clone()));
-	let e_A_i = Rc::new(Expression::ArrayAccess("A", e_i.clone()));
-	let e_A_i_plus_1 = Rc::new(Expression::Binary(e_A_i.clone(), BinaryOperator::Plus, e_1.clone()));
-	let e_A_i_plus_1_ge_0 = Rc::new(Expression::Binary(
-			e_A_i_plus_1.clone(), BinaryOperator::GreaterOrEqual, e_0.clone()));
-	let e_A_i_plus_1_lt_0 = Rc::new(Expression::Unary(UnaryOperator::Not, e_A_i_plus_1_ge_0.clone()));
-	let r_x_plus_A_i = Rc::new(Expression::Binary(e_x.clone(), BinaryOperator::Plus, e_A_i.clone()));
+	let e_a_i = Rc::new(Expression::ArrayAccess("A", e_i.clone()));
+	let e_a_i_plus_1 = Rc::new(Expression::Binary(e_a_i.clone(), BinaryOperator::Plus, e_1.clone()));
+	let e_a_i_plus_1_ge_0 = Rc::new(Expression::Binary(
+		e_a_i_plus_1.clone(), BinaryOperator::GreaterOrEqual, e_0.clone()));
+	let e_a_i_plus_1_lt_0 = Rc::new(Expression::Unary(UnaryOperator::Not, e_a_i_plus_1_ge_0.clone()));
+	let r_x_plus_a_i = Rc::new(Expression::Binary(e_x.clone(), BinaryOperator::Plus, e_a_i.clone()));
 	let e_y_plus_1 = Rc::new(Expression::Binary(e_y.clone(), BinaryOperator::Plus, e_1.clone()));
 	let r_x_div_y = Rc::new(Expression::Binary(e_x.clone(), BinaryOperator::Division, e_y.clone()));
 	
 	let inc_i = Assign("i", e_i_plus_1);
-	let whileCond = Condition(e_i_lt_10.clone());
-	let whileNotCond = Condition(e_i_ge_10.clone());
-	let ifCond = Condition(e_A_i_plus_1_ge_0.clone());
-	let ifNotCond = Condition(e_A_i_plus_1_lt_0.clone());
-	let x_ass_x_plus_A_i = Assign("x", r_x_plus_A_i);
+	let while_cond = Condition(e_i_lt_10.clone());
+	let while_not_cond = Condition(e_i_ge_10.clone());
+	let if_cond = Condition(e_a_i_plus_1_ge_0.clone());
+	let if_not_cond = Condition(e_a_i_plus_1_lt_0.clone());
+	let x_ass_x_plus_a_i = Assign("x", r_x_plus_a_i);
 	let inc_y = Assign("y", e_y_plus_1);
 	let write_x_div_y = Write(r_x_div_y);
 	
@@ -67,15 +66,15 @@ fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	g.add_edge(v[4],v[5],DeclareVariable(Int, "y"));
 	g.add_edge(v[5],v[6],DeclareVariable(Int, "z"));
 	g.add_edge(v[6],v[2],DeclareArray(Int, "A", 10));
-	g.add_edge(v[2],v[8], whileCond.clone());
-	g.add_edge(v[2],v[7],whileNotCond.clone());
+	g.add_edge(v[2], v[8], while_cond.clone());
+	g.add_edge(v[2], v[7], while_not_cond.clone());
 	g.add_edge(v[8],v[9],ReadArray("A", e_i.clone()));
 	g.add_edge(v[9],v[2],inc_i.clone());
-	g.add_edge(v[7],v[10], whileNotCond.clone());
-	g.add_edge(v[7],v[11], whileCond.clone());
-	g.add_edge(v[11],v[13], ifCond);
-	g.add_edge(v[11],v[14], ifNotCond);
-	g.add_edge(v[13],v[15], x_ass_x_plus_A_i);
+	g.add_edge(v[7], v[10], while_not_cond.clone());
+	g.add_edge(v[7], v[11], while_cond.clone());
+	g.add_edge(v[11], v[13], if_cond);
+	g.add_edge(v[11], v[14], if_not_cond);
+	g.add_edge(v[13], v[15], x_ass_x_plus_a_i);
 	g.add_edge(v[15],v[12],inc_i.clone());
 	g.add_edge(v[14],v[16],inc_i.clone());
 	g.add_edge(v[16],v[10],Skip);

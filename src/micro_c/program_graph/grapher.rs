@@ -221,9 +221,8 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 	}
 	fn exit_statement_while(&mut self, cond: Rc<Expression<'a>>, _: Rc<Block<'a>>)
 	{
-		let qs = self.start_state_stack.pop().expect("Exit while statement expected start state on stack, found none.");
-		let qt = self.end_state_stack.pop().expect("Exit while statement end state on stack, found none.");
 		let q_body = self.start_state_stack.pop().expect("Exit while state expected body state on stack, found none");
+		let (qs,qt) = self.pop_stack("Exit While statement");
 		
 		// Pop break/continue targets off their stacks
 		self.break_stack.pop().expect("Exit while statement expexted break state on stack, found none");

@@ -13,7 +13,7 @@ pub const P1: &'static str =
 			i=i+1;
 		}
 		while (i<10){
-			if (A[i]+1>=0){
+			if ((A[i]+1)>=0){
 				x=x+A[i];
 				i=i+1;
 			} else {
@@ -66,19 +66,19 @@ pub fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	g.add_edge(v[4],v[5],DeclareVariable(Int, "y"));
 	g.add_edge(v[5],v[6],DeclareVariable(Int, "z"));
 	g.add_edge(v[6],v[2],DeclareArray(Int, "A", 10));
-	g.add_edge(v[2], v[8], while_cond.clone());
-	g.add_edge(v[2], v[7], while_not_cond.clone());
 	g.add_edge(v[8],v[9],ReadArray("A", e_i.clone()));
 	g.add_edge(v[9],v[2],inc_i.clone());
-	g.add_edge(v[7], v[10], while_not_cond.clone());
-	g.add_edge(v[7], v[11], while_cond.clone());
-	g.add_edge(v[11], v[13], if_cond);
-	g.add_edge(v[11], v[14], if_not_cond);
+	g.add_edge(v[2], v[8], while_cond.clone());
+	g.add_edge(v[2], v[7], while_not_cond.clone());
 	g.add_edge(v[13], v[15], x_ass_x_plus_a_i);
 	g.add_edge(v[15],v[12],inc_i.clone());
 	g.add_edge(v[14],v[16],inc_i.clone());
 	g.add_edge(v[16],v[10],Skip);
+	g.add_edge(v[11], v[14], if_not_cond);
+	g.add_edge(v[11], v[13], if_cond);
 	g.add_edge(v[12],v[7],inc_y.clone());
+	g.add_edge(v[7], v[11], while_cond.clone());
+	g.add_edge(v[7], v[10], while_not_cond.clone());
 	g.add_edge(v[10],v[17],write_x_div_y);
 	g.add_edge(v[17],v[1],Read("z"));
 	g

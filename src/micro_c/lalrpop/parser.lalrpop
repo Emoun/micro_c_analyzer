@@ -56,16 +56,17 @@ SimpleStatements: Statement<'input> = {
 };
 
 Expression: Rc<Expression<'input>> = {
-    SimpleExpression => Rc::new(<>),
+    SimpleExpression => <>,
     <e1: SimpleExpression> <o: BinaryOperator> <e2: Expression> =>
-        Rc::new(Expression::Binary(Rc::new(e1), o, e2)),
+        Rc::new(Expression::Binary(e1, o, e2)),
 };
 
-SimpleExpression: Expression<'input> ={
-    Constant => Expression::Constant(<>),
-    <IDENTIFIER> => Expression::Variable(<>),
-    <IDENTIFIER> LBRACKET <Expression> RBRACKET => Expression::ArrayAccess(<>),
-    <o: UnaryOperator> <e: SimpleExpression> => Expression::Unary(o, Rc::new(e)),
+SimpleExpression: Rc<Expression<'input>> ={
+    LPAREN <Expression> RPAREN => <>,
+    Constant => Rc::new(Expression::Constant(<>)),
+    <IDENTIFIER> => Rc::new(Expression::Variable(<>)),
+    <IDENTIFIER> LBRACKET <Expression> RBRACKET => Rc::new(Expression::ArrayAccess(<>)),
+    <o: UnaryOperator> <e: SimpleExpression> => Rc::new(Expression::Unary(o, e)),
 };
 
 Types: Type = {

@@ -79,9 +79,13 @@ pub trait AstVisitor<'a>{
 	}
 	fn visit_declaration(&mut self, decl: Rc<Declaration<'a>>){
 		self.enter_declaration(decl.clone());
-		if let Declaration::Composite(ref d1,ref d2) = *decl {
-			self.visit_declaration(d1.clone());
-			self.visit_declaration(d2.clone());
+		match *decl {
+			Declaration::Variable(t, name) =>
+				self.visit_declaration_variable(t, name),
+			Declaration::Array(t, n, i) =>
+				self.visit_declaration_array(t,n,i),
+			Declaration::Composite(ref d1, ref d2) =>
+				self.visit_declaration_composite(d1.clone(), d2.clone()),
 		}
 		self.exit_declaration(decl);
 	}

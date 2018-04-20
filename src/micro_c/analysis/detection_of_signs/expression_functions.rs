@@ -1,0 +1,159 @@
+
+use micro_c::{UnaryOperator, analysis::detection_of_signs::{Sign, SignsPowerSet}};
+use progysis::core::Element;
+
+macro_rules! element{
+	(+)=>{
+		<::progysis::core::Element<_> as ::progysis::core::PowerSet>
+		::singleton($crate::micro_c::analysis::detection_of_signs::Sign::Plus)
+	};
+	(0)=>{
+		<::progysis::core::Element<_> as ::progysis::core::PowerSet>
+		::singleton($crate::micro_c::analysis::detection_of_signs::Sign::Zero)
+	};
+	(-)=>{
+		<::progysis::core::Element<_> as ::progysis::core::PowerSet>
+		::singleton($crate::micro_c::analysis::detection_of_signs::Sign::Minus)
+	};
+	(
+		$($mz_signs:tt)*
+	)=>{
+		<::progysis::core::Element<_> as ::progysis::core::CompleteLattice>
+		::bottom() $(+ element!($mz_signs))*
+	};
+}
+
+macro_rules! binary_operator_mapping_macro{
+
+	(
+		$(
+			$bin_op:ident,
+			($($mm_signs:tt)*) | ($($mz_signs:tt)*) | ($($mp_signs:tt)*)
+			($($zm_signs:tt)*) | ($($zz_signs:tt)*) | ($($zp_signs:tt)*)
+			($($pm_signs:tt)*) | ($($pz_signs:tt)*) | ($($pp_signs:tt)*)
+		)*
+	)=>{
+		
+		pub fn binary_operator_mapping(
+			lhs: $crate::micro_c::analysis::detection_of_signs::Sign,
+			op: $crate::micro_c::BinaryOperator,
+			rhs: $crate::micro_c::analysis::detection_of_signs::Sign)
+			-> ::progysis::core::Element<$crate::micro_c::analysis::detection_of_signs::SignsPowerSet>
+		{
+			
+			match op{
+				$(
+					$crate::micro_c::BinaryOperator::$bin_op =>{
+						match lhs {
+							$crate::micro_c::analysis::detection_of_signs::Sign::Plus => match rhs{
+								$crate::micro_c::analysis::detection_of_signs::Sign::Plus => element!($($pp_signs)*),
+								$crate::micro_c::analysis::detection_of_signs::Sign::Zero => element!($($pz_signs)*),
+								$crate::micro_c::analysis::detection_of_signs::Sign::Minus => element!($($pm_signs)*),
+							},
+							$crate::micro_c::analysis::detection_of_signs::Sign::Zero => match rhs{
+								$crate::micro_c::analysis::detection_of_signs::Sign::Plus => element!($($zp_signs)*),
+								$crate::micro_c::analysis::detection_of_signs::Sign::Zero => element!($($zz_signs)*),
+								$crate::micro_c::analysis::detection_of_signs::Sign::Minus => element!($($zm_signs)*),
+							},
+							$crate::micro_c::analysis::detection_of_signs::Sign::Minus => match rhs{
+								$crate::micro_c::analysis::detection_of_signs::Sign::Plus => element!($($mp_signs)*),
+								$crate::micro_c::analysis::detection_of_signs::Sign::Zero => element!($($mz_signs)*),
+								$crate::micro_c::analysis::detection_of_signs::Sign::Minus => element!($($mm_signs)*),
+							},
+						}
+					},
+				)*
+				
+				//_ => unimplemented!("Haven't implemented operator: {:?}", op),
+			}
+		}
+	};
+}
+
+binary_operator_mapping_macro!{
+	/*
+	The format below matches table:
+			opr	|	-	|	0	|	+		(rhs)
+			-	|	v11	|	v21	|	v31
+	(lhs)	0	|	v12	|	v22	|	v32
+			+	|	v13	|	v23	|	v31
+	*/
+	Plus,
+	(-)		| (-)	| (+0-)
+	(-)		| (0)	| (+)
+	(+0-)	| (+)	| (+)
+	
+	Minus,
+	(+0-)	| (-)	| (-)
+	(+)		| (0)	| (-)
+	(+)		| (0)	| (+0-)
+	
+	Multiply,
+	(+)		| (0)	| (-)
+	(0)		| (0)	| (0)
+	(-)		| (0)	| (+)
+	
+	Division,
+	(+)		| (+0-)	| (-)
+	(0)		| (+0-)	| (0)
+	(-)		| (+0-)	| (+)
+	
+	LessThan,
+	(+0)	| (+)	| (+)
+	(0)		| (0)	| (+)
+	(0)		| (0)	| (+0)
+	
+	GreaterThan,
+	(+0)	| (0)	| (+)
+	(+)		| (0)	| (0)
+	(+)		| (+)	| (+0)
+	
+	LessOrEqual,
+	(+0)	| (+)	| (+)
+	(0)		| (+)	| (+)
+	(0)		| (0)	| (+0)
+	
+	GreaterOrEqual,
+	(+0)	| (0)	| (+)
+	(0)		| (+)	| (+)
+	(0)		| (+)	| (+0)
+	
+	Equal,
+	(+0)	| (0)	| (0)
+	(0)		| (+)	| (0)
+	(0)		| (0)	| (+0)
+	
+	NotEqual,
+	(+0)	| (+)	| (+)
+	(+)		| (0)	| (+)
+	(+)		| (+)	| (+0)
+	
+	And,
+	(+)		| (0)	| (+)
+	(0)		| (0)	| (0)
+	(+)		| (0)	| (+)
+	
+	Or,
+	(+)		| (+)	| (+)
+	(+)		| (0)	| (+)
+	(+)		| (+)	| (+)
+	
+}
+
+pub fn unary_operator_mapping(op: UnaryOperator, rhs: Sign) -> Element<SignsPowerSet>
+{
+	match op{
+		UnaryOperator::Negative => match rhs {
+			Sign::Plus => element!(-),
+			Sign::Minus => element!(+),
+			Sign::Zero => element!(0),
+		},
+		UnaryOperator::Not => match rhs {
+			Sign::Plus => element!(0),
+			Sign::Minus => element!(0),
+			Sign::Zero =>element!(+),
+		},
+	}
+}
+
+

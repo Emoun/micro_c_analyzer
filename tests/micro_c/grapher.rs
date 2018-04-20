@@ -1,6 +1,6 @@
 
 use super::programs::*;
-use analyzer::micro_c::{ProgramParser, ProgramGrapher, ProgramGraph, AstVisitor};
+use analyzer::micro_c::{ProgramParser, ProgramGrapher, AstVisitor};
 use std::rc::Rc;
 #[test]
 fn test_program_1(){

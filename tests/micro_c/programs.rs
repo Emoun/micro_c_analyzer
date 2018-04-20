@@ -30,7 +30,7 @@ pub fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	
 	let mut g = ProgramGraph::new();
 	let mut v = Vec::new();
-	for i in 0..18{
+	for _ in 0..18{
 		v.push(g.add_node(()));
 	}
 	

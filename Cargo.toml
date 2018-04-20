@@ -16,6 +16,7 @@ lalrpop = "0.15"
 [dependencies]
 #graphene = "0.1.5"
 petgraph = "0.4.12"
+progysis = {git = "https://github.com/Emoun/progysis.git"}
 lalrpop-util = "0.15"
 regex = "0.2.1" # Required by LALRPOP if we dont want to write the lexer by hand
 

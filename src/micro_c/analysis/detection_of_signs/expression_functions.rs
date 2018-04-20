@@ -1,6 +1,7 @@
 
-use micro_c::{UnaryOperator, analysis::detection_of_signs::{Sign, SignsPowerSet}};
-use progysis::core::Element;
+use micro_c::{UnaryOperator, Expression,
+			  analysis::detection_of_signs::{Sign, SignsPowerSet, SignsTFSpace}};
+use progysis::core::{Element, CompleteLattice, PowerSet};
 
 macro_rules! element{
 	(+)=>{
@@ -153,6 +154,31 @@ pub fn unary_operator_mapping(op: UnaryOperator, rhs: Sign) -> Element<SignsPowe
 			Sign::Minus => element!(0),
 			Sign::Zero =>element!(+),
 		},
+	}
+}
+
+pub fn evaluate<'a>(state: &SignsTFSpace<'a>, expr: &'a Expression<'a>) -> Element<SignsPowerSet>
+{
+	match *expr{
+		Expression::Constant(n) => if n>0 {element!(+)}else if n<0 {element!(-)}else{element!(0)},
+		Expression::Variable(id)
+		| Expression::ArrayAccess(id, _)=> state[id].clone(),
+		Expression::Binary(ref lhs, op, ref rhs) => {
+			let mut result = Element::bottom();
+			for s1 in evaluate(state, lhs).all(){
+				for s2 in evaluate(state, rhs).all(){
+					result += binary_operator_mapping(s1, op, s2);
+				}
+			}
+			result
+		},
+		Expression::Unary(op, ref rhs) => {
+			let mut result = Element::bottom();
+			for s in evaluate(state, rhs).all(){
+				result += unary_operator_mapping(op, s);
+			}
+			result
+		}
 	}
 }
 

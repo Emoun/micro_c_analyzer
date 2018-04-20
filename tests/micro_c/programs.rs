@@ -83,3 +83,43 @@ pub fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	g.add_edge(v[17],v[1],Read("z"));
 	g
 }
+
+pub const P2: &'static str =
+	"{\
+		int x; int y;\
+		y = -1;\
+		x = 0;\
+		while(y<0){\
+			x = x + 1;\
+			read y;\
+		}\
+	}\
+	";
+
+pub fn p2_program_graph<'a>() -> ProgramGraph<'a> {
+	let mut g = ProgramGraph::new();
+	let mut v = Vec::new();
+	for _ in 0..8 {
+		v.push(g.add_node(()));
+	}
+	
+	let e_0 = Rc::new(Expression::Constant(0));
+	let e_1 = Rc::new(Expression::Constant(1));
+	let e_x = Rc::new(Expression::Variable("x"));
+	let e_y = Rc::new(Expression::Variable("y"));
+	let e_minus_1 = Rc::new(Expression::Unary(UnaryOperator::Negative, e_1.clone()));
+	let e_y_lt_0 = Rc::new(Expression::Binary(e_y.clone(), BinaryOperator::LessThan, e_0.clone()));
+	let e_not_y_lt_0 = Rc::new(Expression::Unary(UnaryOperator::Not, e_y_lt_0.clone()));
+	let e_x_plus_1 = Rc::new(Expression::Binary(e_x.clone(), BinaryOperator::Plus, e_1.clone()));
+	
+	g.add_edge(v[0],v[3],DeclareVariable(Int, "x"));
+	g.add_edge(v[3],v[2],DeclareVariable(Int, "y"));
+	g.add_edge(v[2],v[4],Assign("y", e_minus_1.clone()));
+	g.add_edge(v[4],v[5],Assign("x", e_0.clone()));
+	g.add_edge(v[6],v[7],Assign("x", e_x_plus_1.clone()));
+	g.add_edge(v[7],v[5],Read("y"));
+	g.add_edge(v[5],v[6],Condition(e_y_lt_0.clone()));
+	g.add_edge(v[5],v[1],Condition(e_not_y_lt_0.clone()));
+	
+	g
+}

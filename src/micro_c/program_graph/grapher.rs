@@ -36,9 +36,9 @@ impl<'a> ProgramGrapher<'a>
 	
 	pub fn new() -> Self
 	{
-		let mut graph= AdjListGraph::empty_graph();
-		let mut start_state_stack = Vec::new();
-		let mut end_state_stack = Vec::new();
+		let graph= AdjListGraph::empty_graph();
+		let start_state_stack = Vec::new();
+		let end_state_stack = Vec::new();
 		let break_stack = Vec::new();
 		let continue_stack = Vec::new();
 		

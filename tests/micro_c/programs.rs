@@ -7,7 +7,6 @@ use graphene::{
 	core::{
 		BaseGraph, EdgeWeightedGraph
 	},
-	common::AdjListGraph
 };
 
 use std::rc::Rc;
@@ -71,26 +70,26 @@ pub fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	let inc_y = Assign("y", e_y_plus_1);
 	let write_x_div_y = Write(r_x_div_y);
 	
-	g.add_edge_weighted((0,3),DeclareVariable(Int, "i"));
-	g.add_edge_weighted((3,4),DeclareVariable(Int, "x"));
-	g.add_edge_weighted((4,5),DeclareVariable(Int, "y"));
-	g.add_edge_weighted((5,6),DeclareVariable(Int, "z"));
-	g.add_edge_weighted((6,2),DeclareArray(Int, "A", 10));
-	g.add_edge_weighted((8,9),ReadArray("A", e_i.clone()));
-	g.add_edge_weighted((9,2),inc_i.clone());
-	g.add_edge_weighted((2, 8), while_cond.clone());
-	g.add_edge_weighted((2, 7), while_not_cond.clone());
-	g.add_edge_weighted((13, 15), x_ass_x_plus_a_i);
-	g.add_edge_weighted((15,12),inc_i.clone());
-	g.add_edge_weighted((14,16),inc_i.clone());
-	g.add_edge_weighted((16,10),Skip);
-	g.add_edge_weighted((11, 14), if_not_cond);
-	g.add_edge_weighted((11, 13), if_cond);
-	g.add_edge_weighted((12,7),inc_y.clone());
-	g.add_edge_weighted((7, 11), while_cond.clone());
-	g.add_edge_weighted((7, 10), while_not_cond.clone());
-	g.add_edge_weighted((10,17),write_x_div_y);
-	g.add_edge_weighted((17,1),Read("z"));
+	g.add_edge_weighted((0,3),DeclareVariable(Int, "i")).unwrap();
+	g.add_edge_weighted((3,4),DeclareVariable(Int, "x")).unwrap();
+	g.add_edge_weighted((4,5),DeclareVariable(Int, "y")).unwrap();
+	g.add_edge_weighted((5,6),DeclareVariable(Int, "z")).unwrap();
+	g.add_edge_weighted((6,2),DeclareArray(Int, "A", 10)).unwrap();
+	g.add_edge_weighted((8,9),ReadArray("A", e_i.clone())).unwrap();
+	g.add_edge_weighted((9,2),inc_i.clone()).unwrap();
+	g.add_edge_weighted((2, 8), while_cond.clone()).unwrap();
+	g.add_edge_weighted((2, 7), while_not_cond.clone()).unwrap();
+	g.add_edge_weighted((13, 15), x_ass_x_plus_a_i).unwrap();
+	g.add_edge_weighted((15,12),inc_i.clone()).unwrap();
+	g.add_edge_weighted((14,16),inc_i.clone()).unwrap();
+	g.add_edge_weighted((16,10),Skip).unwrap();
+	g.add_edge_weighted((11, 14), if_not_cond).unwrap();
+	g.add_edge_weighted((11, 13), if_cond).unwrap();
+	g.add_edge_weighted((12,7),inc_y.clone()).unwrap();
+	g.add_edge_weighted((7, 11), while_cond.clone()).unwrap();
+	g.add_edge_weighted((7, 10), while_not_cond.clone()).unwrap();
+	g.add_edge_weighted((10,17),write_x_div_y).unwrap();
+	g.add_edge_weighted((17,1),Read("z")).unwrap();
 	g
 }
 
@@ -121,14 +120,14 @@ pub fn p2_program_graph<'a>() -> ProgramGraph<'a> {
 	let e_not_y_lt_0 = Rc::new(Expression::Unary(UnaryOperator::Not, e_y_lt_0.clone()));
 	let e_x_plus_1 = Rc::new(Expression::Binary(e_x.clone(), BinaryOperator::Plus, e_1.clone()));
 	
-	g.add_edge_weighted((0,3),DeclareVariable(Int, "x"));
-	g.add_edge_weighted((3,2),DeclareVariable(Int, "y"));
-	g.add_edge_weighted((2,4),Assign("y", e_minus_1.clone()));
-	g.add_edge_weighted((4,5),Assign("x", e_0.clone()));
-	g.add_edge_weighted((6,7),Assign("x", e_x_plus_1.clone()));
-	g.add_edge_weighted((7,5),Read("y"));
-	g.add_edge_weighted((5,6),Condition(e_y_lt_0.clone()));
-	g.add_edge_weighted((5,1),Condition(e_not_y_lt_0.clone()));
+	g.add_edge_weighted((0,3),DeclareVariable(Int, "x")).unwrap();
+	g.add_edge_weighted((3,2),DeclareVariable(Int, "y")).unwrap();
+	g.add_edge_weighted((2,4),Assign("y", e_minus_1.clone())).unwrap();
+	g.add_edge_weighted((4,5),Assign("x", e_0.clone())).unwrap();
+	g.add_edge_weighted((6,7),Assign("x", e_x_plus_1.clone())).unwrap();
+	g.add_edge_weighted((7,5),Read("y")).unwrap();
+	g.add_edge_weighted((5,6),Condition(e_y_lt_0.clone())).unwrap();
+	g.add_edge_weighted((5,1),Condition(e_not_y_lt_0.clone())).unwrap();
 	
 	g
 }

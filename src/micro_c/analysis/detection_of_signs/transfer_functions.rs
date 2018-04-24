@@ -1,5 +1,5 @@
 
-use progysis::{ core::{Element, PowerSet}, common::MonotoneFunction};
+use progysis::{core::{Element, PowerSet}};
 use micro_c::{Expression, Action, Action::*, analysis::detection_of_signs::{Sign, SignsTFSpace, evaluate}};
 
 fn assign<'a>(state: &SignsTFSpace<'a>, id: &'a str, value: &Expression<'a>) -> SignsTFSpace<'a>

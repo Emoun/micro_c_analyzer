@@ -157,7 +157,7 @@ pub fn unary_operator_mapping(op: UnaryOperator, rhs: Sign) -> Element<SignsPowe
 	}
 }
 
-pub fn evaluate<'a>(state: &SignsTFSpace<'a>, expr: &'a Expression<'a>) -> Element<SignsPowerSet>
+pub fn evaluate<'a>(state: &Element<SignsTFSpace<'a>>, expr: &'a Expression<'a>) -> Element<SignsPowerSet>
 {
 	match *expr{
 		Expression::Constant(n) => if n>0 {element!(+)}else if n<0 {element!(-)}else{element!(0)},

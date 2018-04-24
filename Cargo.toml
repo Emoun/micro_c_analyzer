@@ -14,9 +14,9 @@ path = "src/lib.rs"
 lalrpop = "0.15"
 
 [dependencies]
-#graphene = "0.1.5"
+graphene = {git = "http://github.com/Emoun/graphene", branch="weighted_redesign"}
 petgraph = "0.4.12"
-progysis = {git = "https://github.com/Emoun/progysis.git"}
+progysis = {git = "http://github.com/Emoun/progysis"}
 lalrpop-util = "0.15"
 regex = "0.2.1" # Required by LALRPOP if we dont want to write the lexer by hand
 

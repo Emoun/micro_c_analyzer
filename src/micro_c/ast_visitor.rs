@@ -3,7 +3,7 @@ use micro_c::{
 	Block, Declaration,
 	Statement, Statement::*,
 	Expression, Expression::*,
-	Type, BinaryOperator, UnaryOperator
+	Type, BinaryOperator, UnaryOperator, Lvalue
 };
 use std::rc::Rc;
 
@@ -16,13 +16,11 @@ pub trait AstVisitor<'a>{
 	fn enter_declaration_composite(&mut self, c1: Rc<Declaration<'a>>, c2: Rc<Declaration<'a>>){}
 	
 	fn enter_statement(&mut self, stmt: Rc<Statement<'a>>){}
-	fn enter_statement_assign(&mut self, name: &'a str, expr: Rc<Expression<'a>>){}
-	fn enter_statement_assign_array(&mut self, name: &'a str, index: Rc<Expression<'a>>, expr: Rc<Expression<'a>>){}
+	fn enter_statement_assign(&mut self, lvalue: Rc<Lvalue<'a>>, expr: Rc<Expression<'a>>){}
 	fn enter_statement_if_else(&mut self,
 							   cond: Rc<Expression<'a>>, if_true: Rc<Block<'a>>, if_false: Option<Rc<Block<'a>>>){}
 	fn enter_statement_while(&mut self, cond: Rc<Expression<'a>>, body: Rc<Block<'a>>){}
-	fn enter_statement_read(&mut self, var: &'a str){}
-	fn enter_statement_read_array(&mut self, arr: &'a str, index: Rc<Expression<'a>>){}
+	fn enter_statement_read(&mut self, lvalue: Rc<Lvalue<'a>>){}
 	fn enter_statement_write(&mut self, value: Rc<Expression<'a>>){}
 	fn enter_statement_break(&mut self){}
 	fn enter_statement_continue(&mut self){}
@@ -44,13 +42,11 @@ pub trait AstVisitor<'a>{
 	fn exit_declaration_composite(&mut self, c1: Rc<Declaration<'a>>, c2: Rc<Declaration<'a>>){}
 	
 	fn exit_statement(&mut self, stmt: Rc<Statement<'a>>){}
-	fn exit_statement_assign(&mut self, name: &'a str, expr: Rc<Expression<'a>>){}
-	fn exit_statement_assign_array(&mut self, name: &'a str, index: Rc<Expression<'a>>, expr: Rc<Expression<'a>>){}
+	fn exit_statement_assign(&mut self, lvalue: Rc<Lvalue<'a>>, expr: Rc<Expression<'a>>){}
 	fn exit_statement_if_else(&mut self,
 							   cond: Rc<Expression<'a>>, if_true: Rc<Block<'a>>, if_false: Option<Rc<Block<'a>>>){}
 	fn exit_statement_while(&mut self, cond: Rc<Expression<'a>>, body: Rc<Block<'a>>){}
-	fn exit_statement_read(&mut self, var: &'a str){}
-	fn exit_statement_read_array(&mut self, arr: &'a str, index: Rc<Expression<'a>>){}
+	fn exit_statement_read(&mut self, lvalue: Rc<Lvalue<'a>>){}
 	fn exit_statement_write(&mut self, value: Rc<Expression<'a>>){}
 	fn exit_statement_break(&mut self){}
 	fn exit_statement_continue(&mut self){}
@@ -108,8 +104,7 @@ pub trait AstVisitor<'a>{
 		self.enter_statement(stmt.clone());
 		
 		match *stmt {
-			Assign(ref name, ref expr) =>self.visit_statement_assign(name, expr.clone()),
-			AssignArray(name, ref index, ref expr) =>self.visit_statement_assign_array(name, index.clone(), expr.clone()),
+			Assign(ref lvalue, ref expr) =>self.visit_statement_assign(lvalue.clone(), expr.clone()),
 			IfElse( ref cond,  ref if_true,  ref if_false) =>
 				if let Some(ref block) = *if_false {
 					self.visit_statement_if_else(cond.clone(), if_true.clone(), Some(block.clone()))
@@ -117,8 +112,7 @@ pub trait AstVisitor<'a>{
 					self.visit_statement_if_else(cond.clone(), if_true.clone(), None)
 				},
 			While(ref cond, ref body) => self.visit_statement_while(cond.clone(), body.clone()),
-			Read(ref var) => self.visit_statement_read(var),
-			ReadArray(arr,ref index) => self.visit_statement_read_array(arr, index.clone()),
+			Read(ref lvalue) => self.visit_statement_read(lvalue.clone()),
 			Write(ref expr) => self.visit_statement_write(expr.clone()),
 			Break => self.visit_statement_break(),
 			Continue => self.visit_statement_continue(),
@@ -128,16 +122,10 @@ pub trait AstVisitor<'a>{
 		
 		self.exit_statement(stmt);
 	}
-	fn visit_statement_assign(&mut self, name: &'a str, expr: Rc<Expression<'a>>){
-		self.enter_statement_assign(name, expr.clone());
+	fn visit_statement_assign(&mut self, lvalue: Rc<Lvalue<'a>>, expr: Rc<Expression<'a>>){
+		self.enter_statement_assign(lvalue.clone(), expr.clone());
 		self.visit_expression(expr.clone());
-		self.exit_statement_assign(name, expr);
-	}
-	fn visit_statement_assign_array(&mut self, name: &'a str, index: Rc<Expression<'a>>, expr: Rc<Expression<'a>>){
-		self.enter_statement_assign_array(name, index.clone(), expr.clone());
-		self.visit_expression(index.clone());
-		self.visit_expression(expr.clone());
-		self.exit_statement_assign_array(name, index.clone(), expr.clone());
+		self.exit_statement_assign(lvalue, expr);
 	}
 	fn visit_statement_if_else(&mut self,
 							   cond: Rc<Expression<'a>>, if_true: Rc<Block<'a>>, if_false: Option<Rc<Block<'a>>>){
@@ -155,14 +143,9 @@ pub trait AstVisitor<'a>{
 		self.visit_block(body.clone());
 		self.exit_statement_while(cond, body);
 	}
-	fn visit_statement_read(&mut self, var: &'a str){
-		self.enter_statement_read(var);
-		self.exit_statement_read(var);
-	}
-	fn visit_statement_read_array(&mut self, arr: &'a str, index: Rc<Expression<'a>>){
-		self.enter_statement_read_array(arr, index.clone());
-		self.visit_expression(index.clone());
-		self.exit_statement_read_array(arr, index);
+	fn visit_statement_read(&mut self, lvalue: Rc<Lvalue<'a>>){
+		self.enter_statement_read(lvalue.clone());
+		self.exit_statement_read(lvalue);
 	}
 	fn visit_statement_write(&mut self, value: Rc<Expression<'a>>){
 		self.enter_statement_write(value.clone());

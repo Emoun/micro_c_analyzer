@@ -154,6 +154,7 @@ pub fn unary_operator_mapping(op: UnaryOperator, rhs: Sign) -> Element<SignsPowe
 			Sign::Minus => element!(0),
 			Sign::Zero =>element!(+),
 		},
+		_ => unimplemented!()
 	}
 }
 

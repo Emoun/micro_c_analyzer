@@ -23,13 +23,11 @@ pub enum Declaration<'a> {
 
 #[derive(Clone,Debug, Eq, PartialEq)]
 pub enum Statement<'a> {
-	Assign(&'a str, Rc<Expression<'a>>),
-	AssignArray(&'a str, Rc<Expression<'a>>, Rc<Expression<'a>>),
+	Assign(Rc<Lvalue<'a>>, Rc<Expression<'a>>),
 	Scope(Rc<Block<'a>>),
 	IfElse(Rc<Expression<'a>>, Rc<Block<'a>>, Option<Rc<Block<'a>>>),
 	While(Rc<Expression<'a>>, Rc<Block<'a>>),
-	Read(&'a str),
-	ReadArray(&'a str, Rc<Expression<'a>>),
+	Read(Rc<Lvalue<'a>>),
 	Write(Rc<Expression<'a>>),
 	Break,
 	Continue,
@@ -42,11 +40,24 @@ pub enum Expression<'a> {
 	Variable(&'a str),
 	ArrayAccess(&'a str, Rc<Expression<'a>>),
 	Binary(Rc<Expression<'a>>, BinaryOperator, Rc<Expression<'a>>),
-	Unary(UnaryOperator, Rc<Expression<'a>>)
+	Unary(UnaryOperator<'a>, Rc<Expression<'a>>)
+}
+
+#[derive(Clone,Debug, Eq, PartialEq)]
+pub enum Lvalue<'a> {
+	Variable(bool,&'a str),
+	ArrayAccess(bool,&'a str, Rc<Expression<'a>>),
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum Type {
+pub struct Type {
+	pub is_pointer: bool,
+	pub is_mutable: bool,
+	pub basic_type: BasicType
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum BasicType{
 	Int,
 	Void
 }
@@ -68,8 +79,11 @@ pub enum BinaryOperator {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum UnaryOperator {
+pub enum UnaryOperator<'a> {
 	Negative,
-	Not
+	Not,
+	Deref,
+	BorrowMut(&'a str),
+	BorrowConst(&'a str),
 }
 

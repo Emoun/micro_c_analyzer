@@ -4,7 +4,7 @@ use micro_c::{
 	Block, Declaration,
 	Statement,Expression,
 	Type, UnaryOperator,
-	ProgramGraph, Action
+	ProgramGraph, Action, Lvalue
 };
 use std::rc::Rc;
 use graphene::{
@@ -94,14 +94,19 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 		let (qs,qt) = self.pop_stack("Block");
 	
 		if let Some(_) = block.declarations{
-			// Create a new node if there are declarations
-			let q = self.add_state();
+			// Create a new nodes if there are declarations
+			let q_1 = self.add_state();
+			let q_2 = self.add_state();
 			// Push for the statement
-			self.start_state_stack.push(q);
-			self.end_state_stack.push(qt);
+			self.start_state_stack.push(q_1);
+			self.end_state_stack.push(q_2);
 			// Push for the declaration
 			self.start_state_stack.push(qs);
-			self.end_state_stack.push(q);
+			self.end_state_stack.push(q_1);
+			// Use break/continue stack for drop states
+			self.continue_stack.push(q_2); // start state
+			self.break_stack.push(qt); // end state
+			
 		}else{
 			self.start_state_stack.push(qs);
 			self.end_state_stack.push(qt);
@@ -110,15 +115,24 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 	
 	fn enter_declaration_composite(&mut self, _: Rc<Declaration<'a>>, _: Rc<Declaration<'a>>)
 	{
-		let q = self.add_state();
+		let q_1 = self.add_state();
+		let q_2 = self.add_state();
 		let (qs,qt) = self.pop_stack("Enter Composite declaration");
+		let qd = self.continue_stack.pop()
+			.expect("Enter Composite declaration expected drop start state on stack, found none");
+		let qp = self.break_stack.pop()
+			.expect("Enter Composite declaration expected drop end state on stack, found none");
 		
 		// push states for the second declaration
-		self.start_state_stack.push(q);
+		self.start_state_stack.push(q_1);
 		self.end_state_stack.push(qt);
+		self.continue_stack.push(qd);
+		self.break_stack.push(q_2);
 		// Push states for the first declaration
 		self.start_state_stack.push(qs);
-		self.end_state_stack.push(q);
+		self.end_state_stack.push(q_1);
+		self.continue_stack.push(q_2);
+		self.break_stack.push(qp);
 	}
 	
 	fn enter_statement_composite(&mut self, _: Rc<Statement<'a>>, _:Rc<Statement<'a>>)
@@ -192,29 +206,33 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 	
 	fn exit_declaration_variable(&mut self, t:Type, name: &'a str){
 		let (qs,qt) = self.pop_stack("Exit variable declaration");
+		let qd = self.continue_stack.pop()
+			.expect("Exit variable declaration expected drop start state on stack, found none");
+		let qp = self.break_stack.pop()
+			.expect("Exit variable declaration expected drop end state on stack, found none");
+		
 		self.graph.add_edge_weighted((qs,qt),Action::DeclareVariable(t,name)).unwrap();
+		self.graph.add_edge_weighted((qd,qp),Action::Drop(name)).unwrap();
 	}
 	fn exit_declaration_array(&mut self, t:Type, name: &'a str, len: i32){
-		let (qs,qt) = self.pop_stack("Exit variable declaration");
+		let (qs,qt) = self.pop_stack("Exit array declaration");
+		let qd = self.continue_stack.pop()
+			.expect("Exit array declaration expected drop start state on stack, found none");
+		let qp = self.break_stack.pop()
+			.expect("Exit array declaration expected drop end state on stack, found none");
+		
 		self.graph.add_edge_weighted((qs,qt),Action::DeclareArray(t,name,len)).unwrap();
+		self.graph.add_edge_weighted((qd,qp),Action::Drop(name)).unwrap();
 	}
 	
 	fn exit_statement(&mut self, _: Rc<Statement<'a>>){
 		// start/end stacks popped by child statements
 	}
-	fn exit_statement_assign(&mut self, name: &'a str, expr: Rc<Expression<'a>>){
+	fn exit_statement_assign(&mut self, lvalue: Rc<Lvalue<'a>>, expr: Rc<Expression<'a>>){
 		let (qs,qt) = self.pop_stack("Exit assign statement");
 		
-		self.graph.add_edge_weighted((qs,qt),Action::Assign(name, expr)).unwrap();
+		self.graph.add_edge_weighted((qs,qt),Action::Assign(lvalue, expr)).unwrap();
 		
-	}
-	fn exit_statement_assign_array(&mut self, name: &'a str,
-								   index: Rc<Expression<'a>>,
-								   expr: Rc<Expression<'a>>)
-	{
-		let (qs,qt) = self.pop_stack("AssignArray statement");
-		
-		self.graph.add_edge_weighted((qs,qt),Action::AssignArray(name, index, expr)).unwrap();
 	}
 	fn exit_statement_if_else(&mut self,
 							  cond: Rc<Expression<'a>>, _: Rc<Block<'a>>,
@@ -252,13 +270,9 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 		// add false branch
 		self.graph.add_edge_weighted((qs, qt), Action::Condition(false_cond)).unwrap();
 	}
-	fn exit_statement_read(&mut self, var: &'a str){
+	fn exit_statement_read(&mut self, lvalue: Rc<Lvalue<'a>>){
 		let (qs,qt) = self.pop_stack("Exit read statement");
-		self.graph.add_edge_weighted((qs,qt), Action::Read(var)).unwrap();
-	}
-	fn exit_statement_read_array(&mut self, arr: &'a str, index: Rc<Expression<'a>>){
-		let (qs,qt) = self.pop_stack("Exit read array statement");
-		self.graph.add_edge_weighted((qs,qt), Action::ReadArray(arr,index)).unwrap();
+		self.graph.add_edge_weighted((qs,qt), Action::Read(lvalue)).unwrap();
 	}
 	fn exit_statement_write(&mut self, value: Rc<Expression<'a>>){
 		let (qs,qt) = self.pop_stack("Exit write statement");

@@ -1,6 +1,9 @@
 use std::str::FromStr;
 use std::rc::Rc;
-use micro_c::{Block, Declaration, Statement, Expression, Type, BinaryOperator, UnaryOperator};
+use micro_c::{
+    Block, Declaration, Statement, Expression, Type, BasicType, BinaryOperator,
+    UnaryOperator, Lvalue
+};
 
 grammar;
 
@@ -46,13 +49,18 @@ SingleStatement: Statement<'input> = {
 };
 
 SimpleStatements: Statement<'input> = {
-    <IDENTIFIER> ASSIGN <Expression> => Statement::Assign(<>),
-    <IDENTIFIER> LBRACKET <Expression> RBRACKET ASSIGN <Expression> => Statement::AssignArray(<>),
-    READ <IDENTIFIER> => Statement::Read(<>),
-    READ <IDENTIFIER> LBRACKET <Expression> RBRACKET => Statement::ReadArray(<>),
+    <Lvalue> ASSIGN <Expression> => Statement::Assign(<>),
+    READ <Lvalue> => Statement::Read(<>),
     WRITE <Expression> => Statement::Write(<>),
     BREAK => Statement::Break,
     CONTINUE => Statement::Continue,
+};
+
+Lvalue: Rc<Lvalue<'input>> = {
+    <IDENTIFIER>  => Rc::new(Lvalue::Variable(false, <>)),
+    MUL <IDENTIFIER>  => Rc::new(Lvalue::Variable(true, <>)),
+    <IDENTIFIER> LBRACKET <Expression> RBRACKET => Rc::new(Lvalue::ArrayAccess(false, <>)),
+    MUL <IDENTIFIER> LBRACKET <Expression> RBRACKET => Rc::new(Lvalue::ArrayAccess(true, <>)),
 };
 
 Expression: Rc<Expression<'input>> = {
@@ -70,8 +78,15 @@ SimpleExpression: Rc<Expression<'input>> ={
 };
 
 Types: Type = {
-    INT => Type::Int,
-    VOID => Type::Void
+    <t: BasicType> => Type{is_pointer: false, is_mutable: true, basic_type: t},
+    CONST <t: BasicType> => Type{is_pointer: false, is_mutable: false, basic_type: t},
+    <t: BasicType> MUL => Type{is_pointer: true, is_mutable: true, basic_type: t},
+    CONST <t: BasicType> MUL => Type{is_pointer: true, is_mutable: false, basic_type: t},
+};
+
+BasicType: BasicType = {
+    INT => BasicType::Int,
+    VOID => BasicType::Void
 };
 
 Constant: i32 = INT_LITERAL => i32::from_str(<>).unwrap();
@@ -91,9 +106,12 @@ BinaryOperator: BinaryOperator = {
     OR => BinaryOperator::Or
 };
 
-UnaryOperator: UnaryOperator = {
+UnaryOperator: UnaryOperator<'input> = {
     MINUS => UnaryOperator::Negative,
     NOT => UnaryOperator::Not,
+    MUL => UnaryOperator::Deref,
+    AND <LIFETIME> => UnaryOperator::BorrowMut(<>),
+    AND <LIFETIME> CONST => UnaryOperator::BorrowConst(<>),
 };
 
 // -------------- Lexer Tokens -----------------------
@@ -134,10 +152,15 @@ match {
     "read" => READ,
     "int" => INT,
     "void" => VOID,
+    "const" => CONST,
 } else {
 
     // Integer Literal
     r"0|[1-9][0-9]*" => INT_LITERAL,
+
+    //lifetime
+    r"'[a-zA-Z]+" => LIFETIME,
+    // Identifier
     r"[a-zA-Z]+" => IDENTIFIER,
     _
 }

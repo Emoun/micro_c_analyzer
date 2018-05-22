@@ -1,6 +1,11 @@
 
-use progysis::{core::{Element, PowerSet}};
-use micro_c::{Expression, Action, Action::*, analysis::detection_of_signs::{Sign, SignsTFSpace, evaluate}};
+use progysis::{core::{Element, PowerSet, CompleteLattice}};
+use micro_c::{
+	Expression, Action, Action::*, Lvalue,
+	analysis::detection_of_signs::{
+		Sign, SignsTFSpace, evaluate
+	}
+};
 
 fn assign<'a>(state: &Element<SignsTFSpace<'a>>, id: &'a str, value: &Expression<'a>) -> Element<SignsTFSpace<'a>>
 {
@@ -18,13 +23,18 @@ fn assign_array<'a>(state: &Element<SignsTFSpace<'a>>,
 	new_state
 }
 
-///
-/// Works for Read, ReadArray, DeclareVariable, DeclareArray
-///
+
 fn set_to_top<'a>(state: &Element<SignsTFSpace<'a>>, id: &'a str) -> Element<SignsTFSpace<'a>>
 {
 	let mut new_state = state.clone();
 	new_state[id] = Element::from_iter(vec![Sign::Plus, Sign::Minus, Sign::Zero]);
+	new_state
+}
+
+fn set_to_bot<'a>(state: &Element<SignsTFSpace<'a>>, id: &'a str) -> Element<SignsTFSpace<'a>>
+{
+	let mut new_state = state.clone();
+	new_state[id] = Element::bottom();
 	new_state
 }
 
@@ -39,15 +49,23 @@ fn skip<'a>(state: &Element<SignsTFSpace<'a>>) -> Element<SignsTFSpace<'a>>
 pub fn transfer_function<'a>(state: &Element<SignsTFSpace<'a>>, action: &Action<'a>) -> Element<SignsTFSpace<'a>>
 {
 	match *action {
-		Assign(id, ref expr) => assign(state, id, expr),
-		AssignArray(id, _, ref expr) =>assign_array(state, id, expr),
-		Read(id)
-		| ReadArray(id,_)
-		| DeclareVariable(_, id)
+		Assign(ref lvalue, ref expr) =>
+			match **lvalue {
+				Lvalue::Variable(false, id) => assign(state, id, expr),
+				Lvalue::ArrayAccess(false, id,_) => assign_array(state, id, expr),
+				_ => skip(state)
+			},
+		Read(ref lvalue) => match **lvalue {
+			Lvalue::Variable(false, id) => set_to_top(state, id),
+			Lvalue::ArrayAccess(false, id,_) => set_to_top(state, id),
+			_ => skip(state)
+		}
+		DeclareVariable(_, id)
 		| DeclareArray(_, id, _) => set_to_top(state, id),
 		Skip
 		| Write(_)
 		| Condition(_) => skip(state),
+		Drop(id) => set_to_bot(state, id)
 	}
 }
 

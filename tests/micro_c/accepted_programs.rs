@@ -3,14 +3,14 @@ use analyzer::micro_c::ProgramParser;
 
 #[test]
 fn simple_assignment(){
-	assert_eq!("Block { declarations: None, statements: Assign(\"x\", Constant(4)) }",
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Constant(4)) }",
 			   format!("{:?}",ProgramParser::new().parse("{x=4;}").unwrap()));
 	
 }
 
 #[test]
 fn simple_array_assignment(){
-	assert_eq!("Block { declarations: None, statements: AssignArray(\"x\", Constant(2), Constant(4)) }",
+	assert_eq!("Block { declarations: None, statements: Assign(ArrayAccess(false, \"x\", Constant(2)), Constant(4)) }",
 			   format!("{:?}",ProgramParser::new().parse("{x[2]=4;}").unwrap()));
 	
 }
@@ -27,7 +27,7 @@ fn simple_if(){
 					Block { \
 						declarations: None, \
 						statements: \
-							Assign(\"x\", Constant(4)) \
+							Assign(Variable(false, \"x\"), Constant(4)) \
 					}, \
 					None\
 				) \
@@ -47,13 +47,13 @@ fn simple_if_else(){
 					Block { \
 						declarations: None, \
 						statements: \
-							Assign(\"x\", Constant(2)) \
+							Assign(Variable(false, \"x\"), Constant(2)) \
 					}, \
 					Some(\
 						Block { \
 							declarations: None, \
 							statements: \
-								Assign(\"y\", Constant(3)) \
+								Assign(Variable(false, \"y\"), Constant(3)) \
 						}\
 					)\
 				) \
@@ -73,7 +73,7 @@ fn simple_while(){
 					Block { \
 						declarations: None, \
 						statements: \
-							Assign(\"x\", Constant(2)) \
+							Assign(Variable(false, \"x\"), Constant(2)) \
 					}\
 				) \
 		}",
@@ -87,7 +87,7 @@ fn simple_read(){
 			declarations: \
 				None, \
 			statements: \
-				Read(\"x\") \
+				Read(Variable(false, \"x\")) \
 		}",
 		format!("{:?}",ProgramParser::new().parse("{read x;}").unwrap()));
 }
@@ -99,7 +99,7 @@ fn simple_read_array(){
 			declarations: \
 				None, \
 			statements: \
-				ReadArray(\"x\", Constant(1)) \
+				Read(ArrayAccess(false, \"x\", Constant(1))) \
 		}",
 		format!("{:?}",ProgramParser::new().parse("{read x[1];}").unwrap()));
 }
@@ -138,22 +138,64 @@ fn simple_composite(){
 }
 
 #[test]
-fn simple_declare_variable(){
-	assert_eq!("Block { declarations: Some(Variable(Int, \"x\")), statements: Break }",
+fn declare_mut_variable(){
+	assert_eq!("Block { declarations: Some(Variable(Type { is_pointer: false, is_mutable: true, basic_type: Int }, \"x\")), statements: Break }",
 			   format!("{:?}",ProgramParser::new().parse("{int x; break;}").unwrap()));
 	
 }
 
 #[test]
-fn simple_declare_array(){
-	assert_eq!("Block { declarations: Some(Array(Int, \"x\", 1)), statements: Break }",
+fn declare_const_variable(){
+	assert_eq!("Block { declarations: Some(Variable(Type { is_pointer: false, is_mutable: false, basic_type: Int }, \"x\")), statements: Break }",
+			   format!("{:?}",ProgramParser::new().parse("{const int x; break;}").unwrap()));
+	
+}
+
+#[test]
+fn declare_variable_pointer(){
+	assert_eq!("Block { declarations: Some(Variable(Type { is_pointer: true, is_mutable: true, basic_type: Int }, \"x\")), statements: Break }",
+			   format!("{:?}",ProgramParser::new().parse("{int *x; break;}").unwrap()));
+	
+}
+
+#[test]
+fn declare_const_variable_pointer(){
+	assert_eq!("Block { declarations: Some(Variable(Type { is_pointer: true, is_mutable: false, basic_type: Int }, \"x\")), statements: Break }",
+			   format!("{:?}",ProgramParser::new().parse("{const int *x; break;}").unwrap()));
+	
+}
+
+#[test]
+fn declare_mut_array(){
+	assert_eq!("Block { declarations: Some(Array(Type { is_pointer: false, is_mutable: true, basic_type: Int }, \"x\", 1)), statements: Break }",
 			   format!("{:?}",ProgramParser::new().parse("{int x[1]; break;}").unwrap()));
 	
 }
 
 #[test]
+fn declare_const_array(){
+	assert_eq!("Block { declarations: Some(Array(Type { is_pointer: false, is_mutable: false, basic_type: Int }, \"x\", 1)), statements: Break }",
+			   format!("{:?}",ProgramParser::new().parse("{const int x[1]; break;}").unwrap()));
+	
+}
+
+#[test]
+fn declare_array_pointer(){
+	assert_eq!("Block { declarations: Some(Array(Type { is_pointer: true, is_mutable: true, basic_type: Int }, \"x\", 1)), statements: Break }",
+			   format!("{:?}",ProgramParser::new().parse("{int *x[1]; break;}").unwrap()));
+	
+}
+
+#[test]
+fn declare_const_array_pointer(){
+	assert_eq!("Block { declarations: Some(Array(Type { is_pointer: true, is_mutable: false, basic_type: Int }, \"x\", 1)), statements: Break }",
+			   format!("{:?}",ProgramParser::new().parse("{const int *x[1]; break;}").unwrap()));
+	
+}
+
+#[test]
 fn compisite_declaration(){
-	assert_eq!("Block { declarations: Some(Composite(Variable(Int, \"x\"), Variable(Void, \"y\"))), statements: Break }",
+	assert_eq!("Block { declarations: Some(Composite(Variable(Type { is_pointer: false, is_mutable: true, basic_type: Int }, \"x\"), Variable(Type { is_pointer: false, is_mutable: true, basic_type: Void }, \"y\"))), statements: Break }",
 			   format!("{:?}",ProgramParser::new().parse("{int x; void y; break;}").unwrap()));
 	
 }
@@ -167,39 +209,57 @@ fn block_statement(){
 
 #[test]
 fn variable_expression(){
-	assert_eq!("Block { declarations: None, statements: Assign(\"x\", Variable(\"y\")) }",
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Variable(\"y\")) }",
 			   format!("{:?}",ProgramParser::new().parse("{x=y;}").unwrap()));
 	
 }
 
 #[test]
 fn array_access_expression(){
-	assert_eq!("Block { declarations: None, statements: Assign(\"x\", ArrayAccess(\"y\", Constant(1))) }",
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), ArrayAccess(\"y\", Constant(1))) }",
 			   format!("{:?}",ProgramParser::new().parse("{x=y[1];}").unwrap()));
 	
 }
 
 #[test]
 fn binary_expression(){
-	assert_eq!("Block { declarations: None, statements: Assign(\"x\", Binary(Constant(1), Plus, Constant(2))) }",
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Binary(Constant(1), Plus, Constant(2))) }",
 			   format!("{:?}",ProgramParser::new().parse("{x=1+2;}").unwrap()));
 	
 }
 
 #[test]
 fn unary_expression(){
-	assert_eq!("Block { declarations: None, statements: Assign(\"x\", Unary(Negative, Constant(1))) }",
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Unary(Negative, Constant(1))) }",
 			   format!("{:?}",ProgramParser::new().parse("{x=-1;}").unwrap()));
 }
 
 #[test]
 fn unary_in_binary_expression(){
-	assert_eq!("Block { declarations: None, statements: Assign(\"x\", Binary(Constant(1), Multiply, Unary(Not, Constant(2)))) }",
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Binary(Constant(1), Multiply, Unary(Not, Constant(2)))) }",
 			   format!("{:?}",ProgramParser::new().parse("{x=1*!2;}").unwrap()));
 }
 
 #[test]
 fn unary_precedence_expression(){
-	assert_eq!("Block { declarations: None, statements: Assign(\"x\", Binary(Unary(Negative, Constant(1)), Division, Constant(2))) }",
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Binary(Unary(Negative, Constant(1)), Division, Constant(2))) }",
 			   format!("{:?}",ProgramParser::new().parse("{x=-1/2;}").unwrap()));
+}
+
+#[test]
+fn variable_deref(){
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Unary(Deref, Variable(\"y\"))) }",
+			   format!("{:?}",ProgramParser::new().parse("{x=*y;}").unwrap()));
+}
+
+#[test]
+fn variable_borrow_mut(){
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Unary(BorrowMut(\"\\\'y\"), Variable(\"y\"))) }",
+			   format!("{:?}",ProgramParser::new().parse("{x=&'y y;}").unwrap()));
+}
+
+#[test]
+fn variable_borrow_const(){
+	assert_eq!("Block { declarations: None, statements: Assign(Variable(false, \"x\"), Unary(BorrowConst(\"\\\'y\"), Variable(\"y\"))) }",
+			   format!("{:?}",ProgramParser::new().parse("{x=&'y const y;}").unwrap()));
 }

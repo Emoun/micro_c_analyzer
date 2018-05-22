@@ -159,6 +159,7 @@ pub const P3: &'static str =
 			write *p;\
 			p = &'y const y;\
 		}\
+		write *p;\
 	}\
 	";
 
@@ -168,6 +169,36 @@ pub fn p3_program_graph<'a>() -> ProgramGraph<'a> {
 		g.add_vertex(i).unwrap();
 	}
 	
+	let e_1 = Rc::new(Expression::Constant(1));
+	let e_x = Rc::new(Expression::Variable("x"));
+	let e_y = Rc::new(Expression::Variable("y"));
+	let e_p = Rc::new(Expression::Variable("p"));
+	let e_brw_const_x = Rc::new(Expression::Unary(UnaryOperator::BorrowConst("'x"),e_x.clone()));
+	let e_brw_const_y = Rc::new(Expression::Unary(UnaryOperator::BorrowConst("'y"),e_y.clone()));
+	let e_x_lt_1 = Rc::new(Expression::Binary(e_x.clone(),BinaryOperator::LessThan, e_1.clone()));
+	let e_not_x_lt_1 = Rc::new(Expression::Unary(UnaryOperator::Not, e_x_lt_1.clone()));
+	let e_deref_p = Rc::new(Expression::Unary(UnaryOperator::Deref, e_p.clone()));
+	let lv_x = Rc::new(Lvalue::Variable(false, "x"));
+	let lv_y = Rc::new(Lvalue::Variable(false, "y"));
+	let lv_p = Rc::new(Lvalue::Variable(false, "p"));
+	let lv_deref_p = Rc::new(Lvalue::Variable(true, "p"));
 	
+	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
+	let const_int_p = Type{is_pointer: true, is_mutable: false, basic_type: Int};
+	
+	g.add_edge_weighted((0,4),DeclareVariable(mut_int, "x")).unwrap();
+	g.add_edge_weighted((5,1),Drop("x")).unwrap();
+	g.add_edge_weighted((4,6),DeclareVariable(mut_int, "y")).unwrap();
+	g.add_edge_weighted((7,5),Drop("y")).unwrap();
+	g.add_edge_weighted((6,2),DeclareVariable(const_int_p, "p")).unwrap();
+	g.add_edge_weighted((3,7),Drop("p")).unwrap();
+	g.add_edge_weighted((2,8),Read(lv_x.clone())).unwrap();
+	g.add_edge_weighted((8,9),Read(lv_y.clone())).unwrap();
+	g.add_edge_weighted((9,10),Assign(lv_p.clone(), e_brw_const_x.clone())).unwrap();
+	g.add_edge_weighted((12,13),Write(e_deref_p.clone())).unwrap();
+	g.add_edge_weighted((13,11),Assign(lv_p.clone(), e_brw_const_y.clone())).unwrap();
+	g.add_edge_weighted((10,11),Condition(e_not_x_lt_1.clone())).unwrap();
+	g.add_edge_weighted((10,12),Condition(e_x_lt_1.clone())).unwrap();
+	g.add_edge_weighted((11,3),Write(e_deref_p.clone())).unwrap();
 	g
 }

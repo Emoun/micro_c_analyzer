@@ -1,5 +1,5 @@
 extern crate analyzer;
-#[macro_use]
+//#[macro_use]
 extern crate graphene;
 extern crate progysis;
 

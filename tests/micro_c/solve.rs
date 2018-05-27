@@ -4,14 +4,22 @@ use progysis::{
 	core::{Element, CompleteLattice, ConstraintSystem, PowerSet, TFSpace},
 	common::{worklist::FifoWorklist}
 };
-use analyzer::micro_c::analysis::detection_of_signs::{transfer_function, Sign::*};
-use std::collections::HashMap;
+use analyzer::micro_c::analysis::{
+	detection_of_signs::{
+		transfer_function as signs_transfer,
+		Sign::*
+	},
+	liveness::transfer_function as liveness_transfer,
+};
+use std::collections::{
+	HashMap
+};
 
 #[test]
 fn test_p2_signs_analysis(){
 	
 	let program = p2_program_graph();
-	let cs = ConstraintSystem::new(program, transfer_function, true);
+	let cs = ConstraintSystem::new(program, signs_transfer, true);
 	let mut initial = HashMap::new();
 	initial.insert(0,Element::bottom());
 	
@@ -34,4 +42,31 @@ fn test_p2_signs_analysis(){
 	assert_eq!(plus_zero, initial[&7]["x"]);		assert_eq!(top, initial[&7]["y"]);
 	assert_eq!(plus_zero, initial[&8]["x"]);		assert_eq!(top, initial[&8]["y"]);
 	assert_eq!(plus, initial[&9]["x"]);				assert_eq!(top, initial[&9]["y"]);
+}
+
+#[test]
+fn test_p3_liveness_analysis(){
+	let program = p3_program_graph();
+	let cs = ConstraintSystem::new(program, liveness_transfer, false);
+	let mut initial = HashMap::new();
+	
+	cs.solve::<FifoWorklist>(&mut initial);
+	
+	for i in 0..=7{
+		assert!(initial[&i].all().is_empty(), "State {} was not empty: {:?}", i, initial[&i]);
+	}
+	
+	let expected = vec![
+		["x"].iter().cloned().collect(),
+		["x","y"].iter().cloned().collect(),
+		["x","y","p"].iter().cloned().collect(),
+		["p"].iter().cloned().collect(),
+		["y","p"].iter().cloned().collect(),
+		["y"].iter().cloned().collect(),
+	];
+	
+	for i in 8..=13{
+		assert_eq!(initial[&i].all(), expected[(i-8) as usize]);
+	}
+	
 }

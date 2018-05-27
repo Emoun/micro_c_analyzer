@@ -181,7 +181,6 @@ pub fn p3_program_graph<'a>() -> ProgramGraph<'a> {
 	let lv_x = Rc::new(Lvalue::Variable(false, "x"));
 	let lv_y = Rc::new(Lvalue::Variable(false, "y"));
 	let lv_p = Rc::new(Lvalue::Variable(false, "p"));
-	let lv_deref_p = Rc::new(Lvalue::Variable(true, "p"));
 	
 	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
 	let const_int_p = Type{is_pointer: true, is_mutable: false, basic_type: Int};

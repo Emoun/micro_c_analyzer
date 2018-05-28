@@ -20,7 +20,7 @@ use std::collections::{
 fn test_p2_signs_analysis(){
 	
 	let program = p2_program_graph();
-	let cs = ConstraintSystem::<_,_,_,DetectionOfSignsAnalysis>::new(program);
+	let cs = ConstraintSystem::<_,DetectionOfSignsAnalysis>::new(program);
 	let mut initial = HashMap::new();
 	initial.insert(0,Element::bottom());
 	
@@ -48,7 +48,7 @@ fn test_p2_signs_analysis(){
 #[test]
 fn test_p3_liveness_analysis(){
 	let program = p3_program_graph();
-	let cs = ConstraintSystem::<_,_,_,LivenessAnalysis>::new(program);
+	let cs = ConstraintSystem::<_,LivenessAnalysis>::new(program);
 	let mut initial = HashMap::new();
 	
 	cs.solve::<FifoWorklist>(&mut initial);

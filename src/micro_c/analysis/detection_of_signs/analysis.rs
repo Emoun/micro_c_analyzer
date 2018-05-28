@@ -8,11 +8,17 @@ use micro_c::{
 		SignsTFSpace, transfer_function
 	}
 };
+use std::marker::PhantomData;
 
-pub struct DetectionOfSignsAnalysis{}
+pub struct DetectionOfSignsAnalysis<'a>{
+	pha: PhantomData<&'a u8>
+}
 
-impl<'a> Analysis<SignsTFSpace<'a>, Action<'a>> for DetectionOfSignsAnalysis
+impl<'a> Analysis for DetectionOfSignsAnalysis<'a>
 {
+	type Lattice = SignsTFSpace<'a>;
+	type Action = Action<'a>;
+	
 	fn transfer(state: &Element<SignsTFSpace<'a>>, ac: &Action<'a>) -> Element<SignsTFSpace<'a>>
 	{
 		transfer_function(state,ac)

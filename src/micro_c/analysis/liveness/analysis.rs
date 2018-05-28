@@ -8,11 +8,17 @@ use micro_c::{
 		LiveVariables, transfer_function
 	}
 };
+use std::marker::PhantomData;
 
-pub struct LivenessAnalysis{}
+pub struct LivenessAnalysis<'a>{
+	pha: PhantomData<&'a u8>
+}
 
-impl<'a> Analysis<LiveVariables<'a>, Action<'a>> for LivenessAnalysis
+impl<'a> Analysis for LivenessAnalysis<'a>
 {
+	type Lattice = LiveVariables<'a>;
+	type Action = Action<'a>;
+	
 	fn transfer(state: &Element<LiveVariables<'a>>, ac: &Action<'a>) -> Element<LiveVariables<'a>>
 	{
 		transfer_function(state,ac)

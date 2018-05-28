@@ -20,11 +20,10 @@ use std::collections::{
 fn test_p2_signs_analysis(){
 	
 	let program = p2_program_graph();
-	let cs = ConstraintSystem::<_,DetectionOfSignsAnalysis>::new(program);
 	let mut initial = HashMap::new();
 	initial.insert(0,Element::bottom());
 	
-	cs.solve::<FifoWorklist>(&mut initial);
+	program.analyze::<DetectionOfSignsAnalysis, FifoWorklist>(&mut initial);
 	
 	let top = Element::from_iter(vec![Plus,Minus,Zero]);
 	let plus_zero = Element::from_iter(vec![Plus, Zero]);
@@ -48,10 +47,9 @@ fn test_p2_signs_analysis(){
 #[test]
 fn test_p3_liveness_analysis(){
 	let program = p3_program_graph();
-	let cs = ConstraintSystem::<_,LivenessAnalysis>::new(program);
 	let mut initial = HashMap::new();
 	
-	cs.solve::<FifoWorklist>(&mut initial);
+	program.analyze::<LivenessAnalysis, FifoWorklist>(&mut initial);
 	
 	for i in 0..=7{
 		assert!(initial[&i].all().is_empty(), "State {} was not empty: {:?}", i, initial[&i]);

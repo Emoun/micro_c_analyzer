@@ -6,10 +6,11 @@ use progysis::{
 };
 use analyzer::micro_c::analysis::{
 	detection_of_signs::{
-		transfer_function as signs_transfer,
-		Sign::*
+		DetectionOfSignsAnalysis, Sign::*
 	},
-	liveness::transfer_function as liveness_transfer,
+	liveness::{
+		LivenessAnalysis
+	}
 };
 use std::collections::{
 	HashMap
@@ -19,7 +20,7 @@ use std::collections::{
 fn test_p2_signs_analysis(){
 	
 	let program = p2_program_graph();
-	let cs = ConstraintSystem::new(program, signs_transfer, true);
+	let cs = ConstraintSystem::<_,_,_,DetectionOfSignsAnalysis>::new(program);
 	let mut initial = HashMap::new();
 	initial.insert(0,Element::bottom());
 	
@@ -47,7 +48,7 @@ fn test_p2_signs_analysis(){
 #[test]
 fn test_p3_liveness_analysis(){
 	let program = p3_program_graph();
-	let cs = ConstraintSystem::new(program, liveness_transfer, false);
+	let cs = ConstraintSystem::<_,_,_,LivenessAnalysis>::new(program);
 	let mut initial = HashMap::new();
 	
 	cs.solve::<FifoWorklist>(&mut initial);

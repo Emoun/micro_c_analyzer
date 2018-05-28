@@ -1,9 +1,11 @@
 
 
 mod functions;
-mod complete_lattice;
+mod lattice;
+mod analysis;
 
 pub use self::{
 	functions::*,
-	complete_lattice::*
+	lattice::*,
+	analysis::*,
 };

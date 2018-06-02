@@ -3,9 +3,6 @@ use micro_c::{
 	Expression, Lvalue, Action,
 	analysis::liveness::LiveVariables
 };
-use progysis::core::{
-	Element
-};
 use std::collections::HashSet;
 
 ///
@@ -208,10 +205,10 @@ fn gen<'a>(a: &Action<'a>) -> HashSet<&'a str>
 	}
 }
 
-pub fn transfer_function<'a>(state: &Element<LiveVariables<'a>>, action: &Action<'a>)
-	-> Element<LiveVariables<'a>>
+pub fn transfer_function<'a>(state: &LiveVariables<'a>, action: &Action<'a>)
+	-> LiveVariables<'a>
 {
-	let state_set:HashSet<&'a str> = state.inner.clone().into();
+	let state_set:HashSet<&'a str> = state.clone().into();
 	let new_set = &(&state_set - &kill(action)) | &gen(action);
-	Element::new(LiveVariables::from(new_set))
+	LiveVariables::from(new_set)
 }

@@ -1,25 +1,29 @@
 
-use micro_c::{UnaryOperator, Expression,
-			  analysis::detection_of_signs::{Sign, SignsPowerSet, SignsTFSpace}};
-use progysis::core::{Element, CompleteLattice, PowerSet};
+use micro_c::{
+	UnaryOperator, Expression,
+	analysis::detection_of_signs::{
+		Sign, SignsPowerSet, SignsTFSpace
+	}
+};
+use progysis::core::{CompleteLattice, PowerSet};
 
 macro_rules! element{
 	(+)=>{
-		<::progysis::core::Element<_> as ::progysis::core::PowerSet>
+		$crate::micro_c::analysis::detection_of_signs::SignsPowerSet
 		::singleton($crate::micro_c::analysis::detection_of_signs::Sign::Plus)
 	};
 	(0)=>{
-		<::progysis::core::Element<_> as ::progysis::core::PowerSet>
+		$crate::micro_c::analysis::detection_of_signs::SignsPowerSet
 		::singleton($crate::micro_c::analysis::detection_of_signs::Sign::Zero)
 	};
 	(-)=>{
-		<::progysis::core::Element<_> as ::progysis::core::PowerSet>
+		$crate::micro_c::analysis::detection_of_signs::SignsPowerSet
 		::singleton($crate::micro_c::analysis::detection_of_signs::Sign::Minus)
 	};
 	(
 		$($mz_signs:tt)*
 	)=>{
-		<::progysis::core::Element<_> as ::progysis::core::CompleteLattice>
+		<$crate::micro_c::analysis::detection_of_signs::SignsPowerSet as ::progysis::core::CompleteLattice>
 		::bottom() $(+ element!($mz_signs))*
 	};
 }
@@ -39,7 +43,7 @@ macro_rules! binary_operator_mapping_macro{
 			lhs: $crate::micro_c::analysis::detection_of_signs::Sign,
 			op: $crate::micro_c::BinaryOperator,
 			rhs: $crate::micro_c::analysis::detection_of_signs::Sign)
-			-> ::progysis::core::Element<$crate::micro_c::analysis::detection_of_signs::SignsPowerSet>
+			-> $crate::micro_c::analysis::detection_of_signs::SignsPowerSet
 		{
 			
 			match op{
@@ -141,7 +145,7 @@ binary_operator_mapping_macro!{
 	
 }
 
-pub fn unary_operator_mapping(op: UnaryOperator, rhs: Sign) -> Element<SignsPowerSet>
+pub fn unary_operator_mapping(op: UnaryOperator, rhs: Sign) -> SignsPowerSet
 {
 	match op{
 		UnaryOperator::Negative => match rhs {
@@ -158,14 +162,14 @@ pub fn unary_operator_mapping(op: UnaryOperator, rhs: Sign) -> Element<SignsPowe
 	}
 }
 
-pub fn evaluate<'a>(state: &Element<SignsTFSpace<'a>>, expr: &'a Expression<'a>) -> Element<SignsPowerSet>
+pub fn evaluate<'a>(state: &SignsTFSpace<'a>, expr: &'a Expression<'a>) -> SignsPowerSet
 {
 	match *expr{
 		Expression::Constant(n) => if n>0 {element!(+)}else if n<0 {element!(-)}else{element!(0)},
 		Expression::Variable(id)
 		| Expression::ArrayAccess(id, _)=> state[id].clone(),
 		Expression::Binary(ref lhs, op, ref rhs) => {
-			let mut result = Element::bottom();
+			let mut result = SignsPowerSet::bottom();
 			for s1 in evaluate(state, lhs).all(){
 				for s2 in evaluate(state, rhs).all(){
 					result += binary_operator_mapping(s1, op, s2);
@@ -174,7 +178,7 @@ pub fn evaluate<'a>(state: &Element<SignsTFSpace<'a>>, expr: &'a Expression<'a>)
 			result
 		},
 		Expression::Unary(op, ref rhs) => {
-			let mut result = Element::bottom();
+			let mut result = SignsPowerSet::bottom();
 			for s in evaluate(state, rhs).all(){
 				result += unary_operator_mapping(op, s);
 			}

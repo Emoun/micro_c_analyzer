@@ -1,6 +1,10 @@
 
 use progysis::core::{
-	Analysis, Element, AnalysisDirection
+	Analysis, CompleteLattice, SubLattice
+};
+use graphene::core::{
+	BaseGraph, EdgeWeightedGraph,
+	trait_aliases::IntoFromIter
 };
 use micro_c::{
 	Action,
@@ -14,18 +18,20 @@ pub struct LivenessAnalysis<'a>{
 	pha: PhantomData<&'a u8>
 }
 
-impl<'a> Analysis for LivenessAnalysis<'a>
+impl<'a,G,L> Analysis<G,L> for LivenessAnalysis<'a>
+	where
+		G: EdgeWeightedGraph<EdgeWeight = Action<'a>> + BaseGraph<Vertex = u32>,
+		<G as BaseGraph>::VertexIter: IntoFromIter<u32>,
+		<G as BaseGraph>::EdgeIter: IntoFromIter<(u32, u32, <G as BaseGraph>::EdgeId)>,
+		L: CompleteLattice + SubLattice<LiveVariables<'a>>,
 {
 	type Lattice = LiveVariables<'a>;
 	type Action = Action<'a>;
 	
-	fn transfer(state: &Element<LiveVariables<'a>>, ac: &Action<'a>) -> Element<LiveVariables<'a>>
-	{
-		transfer_function(state,ac)
-	}
+	const FORWARD: bool = false;
 	
-	fn direction() -> AnalysisDirection
+	fn transfer(state: &L, _: &L, ac: &Action<'a>) -> LiveVariables<'a>
 	{
-		AnalysisDirection::Backward
+		transfer_function(state.sub_lattice_ref(),ac)
 	}
 }

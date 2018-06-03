@@ -30,7 +30,7 @@ impl<'a,G,L> Analysis<G,L> for LivenessAnalysis<'a>
 	
 	const FORWARD: bool = false;
 	
-	fn transfer(state: &L, _: &L, ac: &Action<'a>) -> LiveVariables<'a>
+	fn transfer(state: &L, _: &L, ac: &Action<'a>) -> Self::Lattice
 	{
 		transfer_function(state.sub_lattice_ref(),ac)
 	}

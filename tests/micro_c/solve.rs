@@ -1,19 +1,25 @@
 
 use super::programs::*;
 use progysis::{
-	core::{Element, CompleteLattice, ConstraintSystem, PowerSet, TFSpace},
+	core::{CompleteLattice, PowerSet, TFSpace, Analysis, SubLattice},
 	common::{worklist::FifoWorklist}
 };
 use analyzer::micro_c::analysis::{
 	detection_of_signs::{
-		DetectionOfSignsAnalysis, Sign::*
+		DetectionOfSignsAnalysis, Sign::*, SignsTFSpace, SignsPowerSet
 	},
 	liveness::{
-		LivenessAnalysis
+		LivenessAnalysis, LiveVariables
+	},
+	lifetime::{
+		LifetimeAnalysis, LifetimePowerSet, LifetimeTFSpace
 	}
 };
-use std::collections::{
-	HashMap
+use std::{
+	collections::{
+		HashMap
+	},
+	ops::{AddAssign,Add}
 };
 
 #[test]
@@ -21,15 +27,15 @@ fn test_p2_signs_analysis(){
 	
 	let program = p2_program_graph();
 	let mut initial = HashMap::new();
-	initial.insert(0,Element::bottom());
+	initial.insert(0,SignsTFSpace::bottom());
 	
-	program.analyze::<DetectionOfSignsAnalysis, FifoWorklist>(&mut initial);
+	DetectionOfSignsAnalysis::analyze::<FifoWorklist>(&program,&mut initial);
 	
-	let top = Element::from_iter(vec![Plus,Minus,Zero]);
-	let plus_zero = Element::from_iter(vec![Plus, Zero]);
-	let bot = Element::bottom();
-	let minus = Element::singleton(Minus);
-	let plus = Element::singleton(Plus);
+	let top = SignsPowerSet::from_iter(vec![Plus,Minus,Zero]);
+	let plus_zero = SignsPowerSet::from_iter(vec![Plus, Zero]);
+	let bot = SignsPowerSet::bottom();
+	let minus = SignsPowerSet::singleton(Minus);
+	let plus = SignsPowerSet::singleton(Plus);
 	
 	assert_eq!(false, initial[&0].has_key("x"));	assert_eq!(false, initial[&0].has_key("y"));
 	// x and y are not present because the previous state set them to bot, which means they were not merged.
@@ -47,9 +53,9 @@ fn test_p2_signs_analysis(){
 #[test]
 fn test_p3_liveness_analysis(){
 	let program = p3_program_graph();
-	let mut initial = HashMap::new();
+	let mut initial: HashMap<_,LiveVariables>  = HashMap::new();
 	
-	program.analyze::<LivenessAnalysis, FifoWorklist>(&mut initial);
+	LivenessAnalysis::analyze::<FifoWorklist>(&program, &mut initial);
 	
 	for i in 0..=7{
 		assert!(initial[&i].all().is_empty(), "State {} was not empty: {:?}", i, initial[&i]);
@@ -67,5 +73,132 @@ fn test_p3_liveness_analysis(){
 	for i in 8..=13{
 		assert_eq!(initial[&i].all(), expected[(i-8) as usize]);
 	}
-	
 }
+
+#[derive(Debug, Clone, PartialOrd, PartialEq)]
+struct Combined<'a>(LifetimeTFSpace<'a>, LiveVariables<'a>);
+
+impl<'a> CompleteLattice for Combined<'a>
+{
+	fn bottom() -> Self
+	{
+		Combined(LifetimeTFSpace::bottom(), LiveVariables::bottom())
+	}
+	
+	fn is_bottom(&self) -> bool
+	{
+		self.0.is_bottom() && self.1.is_bottom()
+	}
+}
+
+impl<'a> Add for Combined<'a>
+{
+	type Output = Self;
+	
+	fn add(self, o: Self) -> Self::Output
+	{
+		Combined(self.0 + o.0, self.1 + o.1)
+	}
+}
+
+impl<'a,'b> Add<&'b Self> for Combined<'a>
+{
+	type Output = Self;
+	
+	fn add(self, o: &'b Self) -> Self::Output
+	{
+		Combined(self.0 + &o.0, self.1 + &o.1)
+	}
+}
+
+impl<'a> AddAssign for Combined<'a>
+{
+	fn add_assign(&mut self, rhs: Self)
+	{
+		self.0 += rhs.0;
+		self.1 += rhs.1;
+	}
+}
+
+impl<'a,'b> AddAssign<&'b Self> for Combined<'a>
+{
+	fn add_assign(&mut self, rhs: &'b Self)
+	{
+		self.0 += &rhs.0;
+		self.1 += &rhs.1;
+	}
+}
+
+impl<'a> SubLattice<LifetimeTFSpace<'a>> for Combined<'a>
+{
+	fn sub_lattice(self) -> LifetimeTFSpace<'a>
+	{
+		self.0
+	}
+	
+	fn sub_lattice_ref(&self) -> &LifetimeTFSpace<'a>
+	{
+		&self.0
+	}
+	
+	fn sub_lattice_ref_mut(&mut self) -> &mut LifetimeTFSpace<'a>
+	{
+		&mut self.0
+	}
+}
+
+impl<'a> SubLattice<LiveVariables<'a>> for Combined<'a>
+{
+	fn sub_lattice(self) -> LiveVariables<'a>
+	{
+		self.1
+	}
+	
+	fn sub_lattice_ref(&self) -> &LiveVariables<'a>
+	{
+		&self.1
+	}
+	
+	fn sub_lattice_ref_mut(&mut self) -> &mut LiveVariables<'a>
+	{
+		&mut self.1
+	}
+}
+
+#[test]
+fn test_p3_lifetime_analysis(){
+	let program = p3_program_graph();
+	let mut initial: HashMap<_,Combined>  = HashMap::new();
+	
+	LivenessAnalysis::analyze::<FifoWorklist>(&program, &mut initial);
+	LifetimeAnalysis::analyze::<FifoWorklist>(&program, &mut initial);
+	
+	for i in 0..=7{
+		assert!(initial[&i].1.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i]);
+	}
+	
+	let expected = vec![
+		["x"].iter().cloned().collect(),
+		["x","y"].iter().cloned().collect(),
+		["x","y","p"].iter().cloned().collect(),
+		["p"].iter().cloned().collect(),
+		["y","p"].iter().cloned().collect(),
+		["y"].iter().cloned().collect(),
+	];
+	
+	for i in 8..=13{
+		assert_eq!(initial[&i].1.all(), expected[(i-8) as usize]);
+	}
+	
+	for i in 0..=9{
+		assert_eq!(0, initial[&i].0.keys().len())
+	}
+	for i in 10..=12{
+		assert_eq!(1, initial[&i].0.keys().len())
+	}
+	assert_eq!(LifetimePowerSet::singleton("\'x"), initial[&10].0["p"]);
+	assert_eq!(LifetimePowerSet::from_iter(vec!["\'x","\'y"]), initial[&11].0["p"]);
+	assert_eq!(LifetimePowerSet::singleton("\'x"), initial[&12].0["p"]);
+	assert_eq!(0, initial[&13].0.keys().len())
+}
+

@@ -8,21 +8,28 @@ use progysis::{
 		worklist::FifoWorklist
 	},
 };
-use analyzer::micro_c::analysis::{
-	detection_of_signs::{
-		DetectionOfSignsAnalysis, Sign::*, SignsTFSpace, SignsPowerSet
+use analyzer::micro_c::{
+	Expression,
+	analysis::{
+		detection_of_signs::{
+			DetectionOfSignsAnalysis, Sign::*, SignsTFSpace, SignsPowerSet
+		},
+		liveness::{
+			LivenessAnalysis, LiveVariables
+		},
+		lifetime::{
+			LifetimeAnalysis, LifetimePowerSet, LifetimeTFSpace
+		},
+		loan::{
+			Loan, LoanPowerSet, LoanAnalysis,
+		}
 	},
-	liveness::{
-		LivenessAnalysis, LiveVariables
-	},
-	lifetime::{
-		LifetimeAnalysis, LifetimePowerSet, LifetimeTFSpace
-	}
 };
 use std::{
 	collections::{
 		HashMap
 	},
+	rc::Rc,
 };
 
 #[test]
@@ -79,17 +86,17 @@ fn test_p3_liveness_analysis(){
 }
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
-struct Combined<'a>(LifetimeTFSpace<'a>, LiveVariables<'a>);
+struct LifeLiveLattice<'a>(LifetimeTFSpace<'a>, LiveVariables<'a>);
 
-impl<'a> Bottom for Combined<'a>
+impl<'a> Bottom for LifeLiveLattice<'a>
 {
 	fn bottom() -> Self
 	{
-		Combined(LifetimeTFSpace::bottom(), LiveVariables::bottom())
+		LifeLiveLattice(LifetimeTFSpace::bottom(), LiveVariables::bottom())
 	}
 }
 
-impl<'a> SubLattice<LifetimeTFSpace<'a>> for Combined<'a>
+impl<'a> SubLattice<LifetimeTFSpace<'a>> for LifeLiveLattice<'a>
 {
 	fn sub_lattice(self) -> LifetimeTFSpace<'a>
 	{
@@ -107,7 +114,7 @@ impl<'a> SubLattice<LifetimeTFSpace<'a>> for Combined<'a>
 	}
 }
 
-impl<'a> SubLattice<LiveVariables<'a>> for Combined<'a>
+impl<'a> SubLattice<LiveVariables<'a>> for LifeLiveLattice<'a>
 {
 	fn sub_lattice(self) -> LiveVariables<'a>
 	{
@@ -128,7 +135,7 @@ impl<'a> SubLattice<LiveVariables<'a>> for Combined<'a>
 #[test]
 fn test_p3_lifetime_analysis(){
 	let program = p3_program_graph();
-	let mut initial: HashMap<_,Combined>  = HashMap::new();
+	let mut initial: HashMap<_, LifeLiveLattice>  = HashMap::new();
 	
 	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
 	LifetimeAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
@@ -159,6 +166,129 @@ fn test_p3_lifetime_analysis(){
 	assert_eq!(LifetimePowerSet::singleton("\'x"), initial[&10].0["p"]);
 	assert_eq!(LifetimePowerSet::from_iter(vec!["\'x","\'y"]), initial[&11].0["p"]);
 	assert_eq!(LifetimePowerSet::singleton("\'x"), initial[&12].0["p"]);
-	assert_eq!(0, initial[&13].0.keys().len())
+	assert_eq!(0, initial[&13].0.keys().len());
 }
 
+#[derive(Debug, Clone, PartialOrd, PartialEq)]
+struct LoanLifeLiveLattice<'a>(LoanPowerSet<'a>, LifetimeTFSpace<'a>, LiveVariables<'a>);
+
+impl<'a> Bottom for LoanLifeLiveLattice<'a>
+{
+	fn bottom() -> Self
+	{
+		LoanLifeLiveLattice(
+			LoanPowerSet::bottom(),
+			LifetimeTFSpace::bottom(),
+			LiveVariables::bottom())
+	}
+}
+
+impl<'a> SubLattice<LoanPowerSet<'a>> for LoanLifeLiveLattice<'a>
+{
+	fn sub_lattice(self) -> LoanPowerSet<'a>
+	{
+		self.0
+	}
+	
+	fn sub_lattice_ref(&self) -> &LoanPowerSet<'a>
+	{
+		&self.0
+	}
+	
+	fn sub_lattice_ref_mut(&mut self) -> &mut LoanPowerSet<'a>
+	{
+		&mut self.0
+	}
+}
+
+impl<'a> SubLattice<LifetimeTFSpace<'a>> for LoanLifeLiveLattice<'a>
+{
+	fn sub_lattice(self) -> LifetimeTFSpace<'a>
+	{
+		self.1
+	}
+	
+	fn sub_lattice_ref(&self) -> &LifetimeTFSpace<'a>
+	{
+		&self.1
+	}
+	
+	fn sub_lattice_ref_mut(&mut self) -> &mut LifetimeTFSpace<'a>
+	{
+		&mut self.1
+	}
+}
+
+impl<'a> SubLattice<LiveVariables<'a>> for LoanLifeLiveLattice<'a>
+{
+	fn sub_lattice(self) -> LiveVariables<'a>
+	{
+		self.2
+	}
+	
+	fn sub_lattice_ref(&self) -> &LiveVariables<'a>
+	{
+		&self.2
+	}
+	
+	fn sub_lattice_ref_mut(&mut self) -> &mut LiveVariables<'a>
+	{
+		&mut self.2
+	}
+}
+
+#[test]
+fn test_p3_loan_analysis(){
+	let program = p3_program_graph();
+	let mut initial: HashMap<_, LoanLifeLiveLattice>  = HashMap::new();
+	
+	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LifetimeAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LoanAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	
+	for i in 0..=7{
+		assert!(initial[&i].2.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i].2);
+	}
+	
+	let expected = vec![
+		["x"].iter().cloned().collect(),
+		["x","y"].iter().cloned().collect(),
+		["x","y","p"].iter().cloned().collect(),
+		["p"].iter().cloned().collect(),
+		["y","p"].iter().cloned().collect(),
+		["y"].iter().cloned().collect(),
+	];
+	
+	for i in 8..=13{
+		assert_eq!(initial[&i].2.all(), expected[(i-8) as usize]);
+	}
+	
+	for i in 0..=9{
+		assert_eq!(0, initial[&i].1.keys().len())
+	}
+	for i in 10..=12{
+		assert_eq!(1, initial[&i].1.keys().len())
+	}
+	assert_eq!(LifetimePowerSet::singleton("\'x"), initial[&10].1["p"]);
+	assert_eq!(LifetimePowerSet::from_iter(vec!["\'x","\'y"]), initial[&11].1["p"]);
+	assert_eq!(LifetimePowerSet::singleton("\'x"), initial[&12].1["p"]);
+	assert_eq!(0, initial[&13].1.keys().len());
+	
+	for i in 0..=9{
+		assert!(initial[&i].0.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i].0);
+	}
+	
+	let x = Rc::new(Expression::Variable("x"));
+	let y = Rc::new(Expression::Variable("y"));
+	
+	assert_eq!(LoanPowerSet::singleton(Loan{lifetime: "'x", shared: true, lvalue: x.clone()}),
+			   initial[&10].0);
+	assert_eq!(LoanPowerSet::from_iter(vec![
+			Loan{lifetime: "'x", shared: true, lvalue: x.clone()},
+			Loan{lifetime: "'y", shared: true, lvalue: y}
+		]),
+		initial[&11].0);
+	assert_eq!(LoanPowerSet::singleton(Loan{lifetime: "'x", shared: true, lvalue: x}),
+			   initial[&12].0);
+	
+}

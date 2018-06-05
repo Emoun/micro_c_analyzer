@@ -34,7 +34,7 @@ pub enum Statement<'a> {
 	Composite(Rc<Statement<'a>>, Rc<Statement<'a>>)
 }
 
-#[derive(Clone,Debug, Eq, PartialEq)]
+#[derive(Clone,Debug, Eq, PartialEq, Hash)]
 pub enum Expression<'a> {
 	Constant(i32),
 	Variable(&'a str),
@@ -43,26 +43,26 @@ pub enum Expression<'a> {
 	Unary(UnaryOperator<'a>, Rc<Expression<'a>>)
 }
 
-#[derive(Clone,Debug, Eq, PartialEq)]
+#[derive(Clone,Debug, Eq, PartialEq, Hash)]
 pub enum Lvalue<'a> {
 	Variable(bool,&'a str),
 	ArrayAccess(bool,&'a str, Rc<Expression<'a>>),
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Type {
 	pub is_pointer: bool,
 	pub is_mutable: bool,
 	pub basic_type: BasicType
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum BasicType{
 	Int,
 	Void
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum BinaryOperator {
 	Plus,
 	Minus,
@@ -78,7 +78,7 @@ pub enum BinaryOperator {
 	Or
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum UnaryOperator<'a> {
 	Negative,
 	Not,

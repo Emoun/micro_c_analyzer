@@ -2,7 +2,7 @@
 use super::programs::*;
 use progysis::{
 	core::{
-		CompleteLattice, PowerSet, TFSpace, Analysis, SubLattice, Bottom
+		PowerSet, TFSpace, Analysis, SubLattice, Bottom
 	},
 	common::{
 		worklist::FifoWorklist
@@ -23,7 +23,6 @@ use std::{
 	collections::{
 		HashMap
 	},
-	ops::{AddAssign,Add}
 };
 
 #[test]
@@ -82,58 +81,11 @@ fn test_p3_liveness_analysis(){
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 struct Combined<'a>(LifetimeTFSpace<'a>, LiveVariables<'a>);
 
-impl<'a> CompleteLattice for Combined<'a>
-{
-	fn is_bottom(&self) -> bool
-	{
-		self.0.is_bottom() && self.1.is_bottom()
-	}
-}
-
 impl<'a> Bottom for Combined<'a>
 {
 	fn bottom() -> Self
 	{
 		Combined(LifetimeTFSpace::bottom(), LiveVariables::bottom())
-	}
-}
-
-
-impl<'a> Add for Combined<'a>
-{
-	type Output = Self;
-	
-	fn add(self, o: Self) -> Self::Output
-	{
-		Combined(self.0 + o.0, self.1 + o.1)
-	}
-}
-
-impl<'a,'b> Add<&'b Self> for Combined<'a>
-{
-	type Output = Self;
-	
-	fn add(self, o: &'b Self) -> Self::Output
-	{
-		Combined(self.0 + &o.0, self.1 + &o.1)
-	}
-}
-
-impl<'a> AddAssign for Combined<'a>
-{
-	fn add_assign(&mut self, rhs: Self)
-	{
-		self.0 += rhs.0;
-		self.1 += rhs.1;
-	}
-}
-
-impl<'a,'b> AddAssign<&'b Self> for Combined<'a>
-{
-	fn add_assign(&mut self, rhs: &'b Self)
-	{
-		self.0 += &rhs.0;
-		self.1 += &rhs.1;
 	}
 }
 

@@ -1,8 +1,12 @@
 
 use super::programs::*;
 use progysis::{
-	core::{CompleteLattice, PowerSet, TFSpace, Analysis, SubLattice},
-	common::{worklist::FifoWorklist}
+	core::{
+		CompleteLattice, PowerSet, TFSpace, Analysis, SubLattice, Bottom
+	},
+	common::{
+		worklist::FifoWorklist
+	},
 };
 use analyzer::micro_c::analysis::{
 	detection_of_signs::{
@@ -29,7 +33,7 @@ fn test_p2_signs_analysis(){
 	let mut initial = HashMap::new();
 	initial.insert(0,SignsTFSpace::bottom());
 	
-	DetectionOfSignsAnalysis::analyze::<FifoWorklist>(&program,&mut initial);
+	DetectionOfSignsAnalysis::analyze::<FifoWorklist<_>>(&program,&mut initial);
 	
 	let top = SignsPowerSet::from_iter(vec![Plus,Minus,Zero]);
 	let plus_zero = SignsPowerSet::from_iter(vec![Plus, Zero]);
@@ -55,7 +59,7 @@ fn test_p3_liveness_analysis(){
 	let program = p3_program_graph();
 	let mut initial: HashMap<_,LiveVariables>  = HashMap::new();
 	
-	LivenessAnalysis::analyze::<FifoWorklist>(&program, &mut initial);
+	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
 	
 	for i in 0..=7{
 		assert!(initial[&i].all().is_empty(), "State {} was not empty: {:?}", i, initial[&i]);
@@ -80,16 +84,20 @@ struct Combined<'a>(LifetimeTFSpace<'a>, LiveVariables<'a>);
 
 impl<'a> CompleteLattice for Combined<'a>
 {
-	fn bottom() -> Self
-	{
-		Combined(LifetimeTFSpace::bottom(), LiveVariables::bottom())
-	}
-	
 	fn is_bottom(&self) -> bool
 	{
 		self.0.is_bottom() && self.1.is_bottom()
 	}
 }
+
+impl<'a> Bottom for Combined<'a>
+{
+	fn bottom() -> Self
+	{
+		Combined(LifetimeTFSpace::bottom(), LiveVariables::bottom())
+	}
+}
+
 
 impl<'a> Add for Combined<'a>
 {
@@ -170,8 +178,8 @@ fn test_p3_lifetime_analysis(){
 	let program = p3_program_graph();
 	let mut initial: HashMap<_,Combined>  = HashMap::new();
 	
-	LivenessAnalysis::analyze::<FifoWorklist>(&program, &mut initial);
-	LifetimeAnalysis::analyze::<FifoWorklist>(&program, &mut initial);
+	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LifetimeAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
 	
 	for i in 0..=7{
 		assert!(initial[&i].1.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i]);

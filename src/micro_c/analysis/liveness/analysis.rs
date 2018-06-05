@@ -1,10 +1,9 @@
 
 use progysis::core::{
-	Analysis, CompleteLattice, SubLattice
+	Analysis, SubLattice, Bottom
 };
 use graphene::core::{
-	BaseGraph, EdgeWeightedGraph,
-	trait_aliases::IntoFromIter
+	EdgeWeightedGraph,
 };
 use micro_c::{
 	Action,
@@ -12,7 +11,10 @@ use micro_c::{
 		LiveVariables, transfer_function
 	}
 };
-use std::marker::PhantomData;
+use std::{
+	marker::PhantomData,
+	hash::Hash,
+};
 
 pub struct LivenessAnalysis<'a>{
 	pha: PhantomData<&'a u8>
@@ -20,13 +22,11 @@ pub struct LivenessAnalysis<'a>{
 
 impl<'a,G,L> Analysis<G,L> for LivenessAnalysis<'a>
 	where
-		G: EdgeWeightedGraph<EdgeWeight = Action<'a>> + BaseGraph<Vertex = u32>,
-		<G as BaseGraph>::VertexIter: IntoFromIter<u32>,
-		<G as BaseGraph>::EdgeIter: IntoFromIter<(u32, u32, <G as BaseGraph>::EdgeId)>,
-		L: CompleteLattice + SubLattice<LiveVariables<'a>>,
+		G: EdgeWeightedGraph<EdgeWeight = Action<'a>>,
+		G::Vertex: Hash,
+		L: Bottom + SubLattice<LiveVariables<'a>>,
 {
 	type Lattice = LiveVariables<'a>;
-	type Action = Action<'a>;
 	
 	const FORWARD: bool = false;
 	

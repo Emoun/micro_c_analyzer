@@ -5,7 +5,9 @@ use micro_c::{
 		Sign, SignsPowerSet, SignsTFSpace
 	}
 };
-use progysis::core::{CompleteLattice, PowerSet};
+use progysis::core::{
+	PowerSet, Bottom
+};
 
 macro_rules! element{
 	(+)=>{
@@ -23,7 +25,7 @@ macro_rules! element{
 	(
 		$($mz_signs:tt)*
 	)=>{
-		<$crate::micro_c::analysis::detection_of_signs::SignsPowerSet as ::progysis::core::CompleteLattice>
+		<$crate::micro_c::analysis::detection_of_signs::SignsPowerSet as ::progysis::core::Bottom>
 		::bottom() $(+ element!($mz_signs))*
 	};
 }

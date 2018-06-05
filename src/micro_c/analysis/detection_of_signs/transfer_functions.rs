@@ -1,6 +1,8 @@
 
 use progysis::{
-	core::{PowerSet, CompleteLattice}
+	core::{
+		PowerSet, Bottom
+	},
 };
 use micro_c::{
 	Expression,

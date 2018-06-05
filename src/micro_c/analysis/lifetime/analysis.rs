@@ -1,21 +1,23 @@
 
 use progysis::{
 	core::{
-		TFSpace, PowerSet, CompleteLattice, Analysis, SubLattice
+		TFSpace, PowerSet, CompleteLattice, Analysis, SubLattice, Bottom
 	},
 	common::lattices::{
 		HashPowerSet, HashTFSpace,
 	}
 };
 use graphene::core::{
-	BaseGraph, EdgeWeightedGraph,
-	trait_aliases::IntoFromIter
+	EdgeWeightedGraph,
 };
 use micro_c::{
 	Expression, UnaryOperator, Action, Lvalue,
 	analysis::liveness::LiveVariables
 };
-use std::marker::PhantomData;
+use std::{
+	marker::PhantomData,
+	hash::Hash,
+};
 
 pub type LifetimePowerSet<'a> = HashPowerSet<&'a str>;
 
@@ -48,13 +50,11 @@ pub struct LifetimeAnalysis<'a>{
 
 impl<'a,G,L> Analysis<G,L> for LifetimeAnalysis<'a>
 	where
-		G: EdgeWeightedGraph<EdgeWeight = Action<'a>> + BaseGraph<Vertex = u32>,
-		<G as BaseGraph>::VertexIter: IntoFromIter<u32>,
-		<G as BaseGraph>::EdgeIter: IntoFromIter<(u32, u32, <G as BaseGraph>::EdgeId)>,
-		L: CompleteLattice + SubLattice<LifetimeTFSpace<'a>> + SubLattice<LiveVariables<'a>>,
+		G: EdgeWeightedGraph<EdgeWeight = Action<'a>>,
+		G::Vertex: Hash,
+		L: Bottom + SubLattice<LifetimeTFSpace<'a>> + SubLattice<LiveVariables<'a>>,
 {
 	type Lattice = LifetimeTFSpace<'a>;
-	type Action = Action<'a>;
 	
 	const FORWARD: bool = true;
 	
@@ -62,7 +62,6 @@ impl<'a,G,L> Analysis<G,L> for LifetimeAnalysis<'a>
 	{
 		let dep = dependency.sub_lattice_ref();
 		let tar = target.sub_lattice_ref();
-		//println!("transfer({:?},{:?},{:?})",dep,tar,ac);
 		
 		if let &Action::Assign(ref l,ref e) = ac{
 			if let Lvalue::Variable(false,x) = l.as_ref(){

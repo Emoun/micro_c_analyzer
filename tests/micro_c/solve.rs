@@ -292,3 +292,23 @@ fn test_p3_loan_analysis(){
 			   initial[&12].0);
 	
 }
+
+#[test]
+fn test_p4_loan_analysis(){
+	let program = p4_program_graph();
+	let mut initial: HashMap<_, LoanLifeLiveLattice>  = HashMap::new();
+	
+	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LifetimeAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LoanAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	
+	for i in 0..=5{
+		assert!(initial[&i].0.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i].0);
+	}
+	
+	let data = Rc::new(Expression::Variable("data"));
+	
+	assert_eq!(LoanPowerSet::singleton(
+		Loan{lifetime: "'a", shared: false, lvalue: data}), initial[&6].0);
+	assert!(initial[&7].0.all().is_empty(), "State {} was not empty: {:?}", 7, initial[&7].0);
+}

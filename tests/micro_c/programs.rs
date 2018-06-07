@@ -201,3 +201,41 @@ pub fn p3_program_graph<'a>() -> ProgramGraph<'a> {
 	g.add_edge_weighted((11,3),Write(e_deref_p.clone())).unwrap();
 	g
 }
+
+pub const P4: &'static str =
+	"{\
+		int data[4];\
+		int *p[4];\
+		p = &'a data;\
+		*p[1] = 4;\
+		data[1] = 1;\
+	}\
+	";
+pub fn p4_program_graph<'a>() -> ProgramGraph<'a>
+{
+	let mut g = ProgramGraph::empty_graph();
+	for i in 0..=7{
+		g.add_vertex(i).unwrap();
+	}
+	
+	let e_1 = Rc::new(Expression::Constant(1));
+	let e_4 = Rc::new(Expression::Constant(4));
+	let e_data = Rc::new(Expression::Variable("data"));
+	let e_brw_mut_data = Rc::new(Expression::Unary(UnaryOperator::BorrowMut("'a"),e_data.clone()));
+	
+	let l_deref_p_1 = Rc::new(Lvalue::ArrayAccess(true, "p", e_1.clone()));
+	let l_data_1 = Rc::new(Lvalue::ArrayAccess(false, "data", e_1.clone()));
+	let l_p = Rc::new(Lvalue::Variable(false, "p"));
+	
+	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
+	let mut_int_p = Type{is_pointer: true, is_mutable: true, basic_type: Int};
+	
+	g.add_edge_weighted((0,4),DeclareArray(mut_int, "data", 4)).unwrap();
+	g.add_edge_weighted((5,1),Drop("data")).unwrap();
+	g.add_edge_weighted((4,2),DeclareArray(mut_int_p, "p", 4)).unwrap();
+	g.add_edge_weighted((3,5),Drop("p")).unwrap();
+	g.add_edge_weighted((2,6),Assign(l_p, e_brw_mut_data)).unwrap();
+	g.add_edge_weighted((6,7),Assign(l_deref_p_1, e_4.clone())).unwrap();
+	g.add_edge_weighted((7,3),Assign(l_data_1, e_1)).unwrap();
+	g
+}

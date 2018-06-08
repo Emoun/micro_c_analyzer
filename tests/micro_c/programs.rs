@@ -239,3 +239,16 @@ pub fn p4_program_graph<'a>() -> ProgramGraph<'a>
 	g.add_edge_weighted((7,3),Assign(l_data_1, e_1)).unwrap();
 	g
 }
+
+pub const P5: &'static str =
+	"{\
+		int x;\
+		int *p;\
+		p = &'a x;\
+		if(1 < *p){\
+			*p = 1;\
+		}else{\
+			x = 2;\
+		}\
+	}\
+	";

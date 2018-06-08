@@ -9,7 +9,7 @@ use progysis::{
 	},
 };
 use analyzer::micro_c::{
-	Expression,
+	Expression, ProgramParser, ProgramGrapher, AstVisitor,
 	analysis::{
 		detection_of_signs::{
 			DetectionOfSignsAnalysis, Sign::*, SignsTFSpace, SignsPowerSet
@@ -311,4 +311,31 @@ fn test_p4_loan_analysis(){
 	assert_eq!(LoanPowerSet::singleton(
 		Loan{lifetime: "'a", shared: false, lvalue: data}), initial[&6].0);
 	assert!(initial[&7].0.all().is_empty(), "State {} was not empty: {:?}", 7, initial[&7].0);
+}
+
+#[test]
+fn test_p5_loan_analysis() {
+	let ast = ProgramParser::new().parse(P5).unwrap();
+	let mut grapher = ProgramGrapher::new();
+	grapher.visit(Rc::new(ast));
+	let program = grapher.get_graph();
+	
+	let mut initial: HashMap<_, LoanLifeLiveLattice>  = HashMap::new();
+	
+	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LifetimeAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LoanAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	
+	for i in 0..=5{
+		assert!(initial[&i].0.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i].0);
+	}
+	
+	let x = Rc::new(Expression::Variable("x"));
+	
+	assert_eq!(LoanPowerSet::singleton(
+		Loan{lifetime: "'a", shared: false, lvalue: x.clone()}), initial[&6].0);
+	assert_eq!(LoanPowerSet::singleton(
+		Loan{lifetime: "'a", shared: false, lvalue: x}), initial[&7].0);
+	
+	assert!(initial[&8].0.all().is_empty(), "State {} was not empty: {:?}", 8, initial[&8].0);
 }

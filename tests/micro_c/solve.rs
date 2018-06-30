@@ -294,8 +294,11 @@ fn test_p3_loan_analysis(){
 }
 
 #[test]
-fn test_p4_loan_analysis(){
-	let program = p4_program_graph();
+fn test_problem_1_loan_analysis(){
+	let ast = ProgramParser::new().parse(PROBLEM_1).unwrap();
+	let mut grapher = ProgramGrapher::new();
+	grapher.visit(Rc::new(ast));
+	let program = grapher.get_graph();
 	let mut initial: HashMap<_, LoanLifeLiveLattice>  = HashMap::new();
 	
 	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
@@ -314,8 +317,8 @@ fn test_p4_loan_analysis(){
 }
 
 #[test]
-fn test_p5_loan_analysis() {
-	let ast = ProgramParser::new().parse(P5).unwrap();
+fn test_problem_2_loan_analysis() {
+	let ast = ProgramParser::new().parse(PROBLEM_2).unwrap();
 	let mut grapher = ProgramGrapher::new();
 	grapher.visit(Rc::new(ast));
 	let program = grapher.get_graph();
@@ -330,12 +333,46 @@ fn test_p5_loan_analysis() {
 		assert!(initial[&i].0.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i].0);
 	}
 	
-	let x = Rc::new(Expression::Variable("x"));
+	let data = Rc::new(Expression::Variable("data"));
 	
 	assert_eq!(LoanPowerSet::singleton(
-		Loan{lifetime: "'a", shared: false, lvalue: x.clone()}), initial[&6].0);
+		Loan{lifetime: "'a", shared: false, lvalue: data.clone()}), initial[&6].0);
 	assert_eq!(LoanPowerSet::singleton(
-		Loan{lifetime: "'a", shared: false, lvalue: x}), initial[&7].0);
+		Loan{lifetime: "'a", shared: false, lvalue: data }), initial[&7].0);
 	
 	assert!(initial[&8].0.all().is_empty(), "State {} was not empty: {:?}", 8, initial[&8].0);
+}
+
+#[test]
+fn test_invlid_program_loan_analysis() {
+	let ast = ProgramParser::new().parse(INVALID_PROGRAM).unwrap();
+	let mut grapher = ProgramGrapher::new();
+	grapher.visit(Rc::new(ast));
+	let program = grapher.get_graph();
+	
+	let mut initial: HashMap<_, LoanLifeLiveLattice>  = HashMap::new();
+	
+	LivenessAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LifetimeAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	LoanAnalysis::analyze::<FifoWorklist<_>>(&program, &mut initial);
+	
+	for i in 0..=7{
+		assert!(initial[&i].0.all().is_empty(), "State {} was not empty: {:?}", i, initial[&i].0);
+	}
+	
+	let data = Rc::new(Expression::Variable("data"));
+	
+	for i in [8,10,11].iter(){
+		assert_eq!(LoanPowerSet::singleton(
+			Loan{lifetime: "'a", shared: true, lvalue: data.clone()}), initial[&i].0, "{}",i);
+	}
+	
+	assert_eq!(LoanPowerSet::from_iter(
+		vec![
+			Loan{lifetime: "'a", shared: true, lvalue: data.clone()},
+			Loan{lifetime: "'b", shared: false, lvalue: data.clone()}
+		]), initial[&9].0);
+	assert_eq!(LoanPowerSet::singleton(
+		Loan{lifetime: "'b", shared: false, lvalue: data }), initial[&12].0);
+	
 }

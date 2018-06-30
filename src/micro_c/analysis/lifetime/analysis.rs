@@ -27,18 +27,17 @@ pub fn lifetimes<'a>(state: &LifetimeTFSpace<'a>, e: &Expression<'a>) -> Lifetim
 {
 	use self::Expression::*;
 	match e {
-		Variable(p) => if state.has_key(p) {return state[p].clone();},
-		Unary(UnaryOperator::Deref, e_1) => {
-			if let &Variable(p) = e_1.as_ref(){
-				if state.has_key(p){
-					return state[p].clone();
-				}
-			}
-		},
+		Variable(p) =>
+			if state.has_key(p) {
+				return state[p].clone();
+			},
 		Unary(UnaryOperator::BorrowMut(a), e_1)
-		| Unary(UnaryOperator::BorrowConst(a), e_1) =>{
-			return LifetimePowerSet::singleton(a) + lifetimes(state, e_1.as_ref());
-		},
+		| Unary(UnaryOperator::BorrowConst(a), e_1) =>
+			if let &Unary(UnaryOperator::Deref, ref e_2) = e_1.as_ref(){
+				return LifetimePowerSet::singleton(a) + lifetimes(state, e_2.as_ref());
+			} else {
+				return LifetimePowerSet::singleton(a);
+			},
 		_ => (),
 	}
 	LifetimePowerSet::bottom()

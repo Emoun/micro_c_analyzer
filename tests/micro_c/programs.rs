@@ -202,16 +202,15 @@ pub fn p3_program_graph<'a>() -> ProgramGraph<'a> {
 	g
 }
 
-pub const P4: &'static str =
+pub const PROBLEM_1: &'static str =
 	"{\
-		int data[4];\
-		int *p[4];\
-		p = &'a data;\
-		*p[1] = 4;\
-		data[1] = 1;\
+		int data; int *r;\
+		r = &'a data;\
+		*r = 4;\
+		data = 1;\
 	}\
 	";
-pub fn p4_program_graph<'a>() -> ProgramGraph<'a>
+pub fn problem_1_program_graph<'a>() -> ProgramGraph<'a>
 {
 	let mut g = ProgramGraph::empty_graph();
 	for i in 0..=7{
@@ -223,32 +222,45 @@ pub fn p4_program_graph<'a>() -> ProgramGraph<'a>
 	let e_data = Rc::new(Expression::Variable("data"));
 	let e_brw_mut_data = Rc::new(Expression::Unary(UnaryOperator::BorrowMut("'a"),e_data.clone()));
 	
-	let l_deref_p_1 = Rc::new(Lvalue::ArrayAccess(true, "p", e_1.clone()));
-	let l_data_1 = Rc::new(Lvalue::ArrayAccess(false, "data", e_1.clone()));
-	let l_p = Rc::new(Lvalue::Variable(false, "p"));
+	let l_deref_r = Rc::new(Lvalue::Variable(true, "r"));
+	let l_data = Rc::new(Lvalue::Variable(false, "data"));
+	let l_r = Rc::new(Lvalue::Variable(false, "r"));
 	
 	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
 	let mut_int_p = Type{is_pointer: true, is_mutable: true, basic_type: Int};
 	
-	g.add_edge_weighted((0,4),DeclareArray(mut_int, "data", 4)).unwrap();
+	g.add_edge_weighted((0,4),DeclareVariable(mut_int, "data")).unwrap();
 	g.add_edge_weighted((5,1),Drop("data")).unwrap();
-	g.add_edge_weighted((4,2),DeclareArray(mut_int_p, "p", 4)).unwrap();
-	g.add_edge_weighted((3,5),Drop("p")).unwrap();
-	g.add_edge_weighted((2,6),Assign(l_p, e_brw_mut_data)).unwrap();
-	g.add_edge_weighted((6,7),Assign(l_deref_p_1, e_4.clone())).unwrap();
-	g.add_edge_weighted((7,3),Assign(l_data_1, e_1)).unwrap();
+	g.add_edge_weighted((4,2),DeclareVariable(mut_int_p, "r")).unwrap();
+	g.add_edge_weighted((3,5),Drop("r")).unwrap();
+	g.add_edge_weighted((2,6),Assign(l_r, e_brw_mut_data)).unwrap();
+	g.add_edge_weighted((6,7),Assign(l_deref_r, e_4.clone())).unwrap();
+	g.add_edge_weighted((7,3),Assign(l_data, e_1)).unwrap();
 	g
 }
 
-pub const P5: &'static str =
+pub const PROBLEM_2: &'static str =
 	"{\
-		int x;\
-		int *p;\
-		p = &'a x;\
-		if(1 < *p){\
-			*p = 1;\
+		int data; int *r;\
+		r = &'a data;\
+		if(1 < *r){\
+			*r = 1;\
 		}else{\
-			x = 2;\
+			data = 2;\
 		}\
+	}\
+	";
+
+pub const INVALID_PROGRAM: &'static str =
+	"{\
+		int data; const int *r; int *p;\
+		r = &'a const data;\
+		if(1 < *r){\
+			p = &'b data;\
+		}else{\
+			data = 1;\
+		}\
+		write *r;
+		*p = 2;
 	}\
 	";

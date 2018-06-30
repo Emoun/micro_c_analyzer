@@ -24,9 +24,9 @@ fn test_program_3(){
 }
 
 #[test]
-fn test_program_4(){
-	let g_expected = p4_program_graph();
-	test_program_graph(&g_expected, P4);
+fn test_problem_1(){
+	let g_expected = problem_1_program_graph();
+	test_program_graph(&g_expected, PROBLEM_1);
 }
 
 // Helper functions

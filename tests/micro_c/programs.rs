@@ -6,7 +6,7 @@ use analyzer::micro_c::{
 
 use graphene::{
 	core::{
-		BaseGraph, EdgeWeightedGraph
+		Graph, ManualGraph
 	},
 };
 
@@ -36,7 +36,7 @@ pub const P1: &'static str =
 
 pub fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	
-	let mut g = ProgramGraph::empty_graph();
+	let mut g = ProgramGraph::new();
 	
 	for i in 0..23{
 		g.add_vertex(i).unwrap();
@@ -76,31 +76,31 @@ pub fn p1_program_graph<'a>() -> ProgramGraph<'a> {
 	let write_x_div_y = Write(r_x_div_y);
 	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
 	
-	g.add_edge_weighted((0,4),DeclareVariable(mut_int, "i")).unwrap();
-	g.add_edge_weighted((5,1),Drop("i")).unwrap();
-	g.add_edge_weighted((4,6),DeclareVariable(mut_int, "x")).unwrap();
-	g.add_edge_weighted((7,5),Drop("x")).unwrap();
-	g.add_edge_weighted((6,8),DeclareVariable(mut_int, "y")).unwrap();
-	g.add_edge_weighted((9,7),Drop("y")).unwrap();
-	g.add_edge_weighted((8,10),DeclareVariable(mut_int, "z")).unwrap();
-	g.add_edge_weighted((11,9),Drop("z")).unwrap();
-	g.add_edge_weighted((10,2),DeclareArray(mut_int, "A", 10)).unwrap();
-	g.add_edge_weighted((3,11),Drop("A")).unwrap();
-	g.add_edge_weighted((13,14),Read(lv_a_i.clone())).unwrap();
-	g.add_edge_weighted((14,2),inc_i.clone()).unwrap();
-	g.add_edge_weighted((2, 13), while_cond.clone()).unwrap();
-	g.add_edge_weighted((2, 12), while_not_cond.clone()).unwrap();
-	g.add_edge_weighted((18, 20), x_ass_x_plus_a_i).unwrap();
-	g.add_edge_weighted((20,17),inc_i.clone()).unwrap();
-	g.add_edge_weighted((19,21),inc_i.clone()).unwrap();
-	g.add_edge_weighted((21,15),Skip).unwrap();
-	g.add_edge_weighted((16, 19), if_not_cond).unwrap();
-	g.add_edge_weighted((16, 18), if_cond).unwrap();
-	g.add_edge_weighted((17,12),inc_y.clone()).unwrap();
-	g.add_edge_weighted((12, 16), while_cond.clone()).unwrap();
-	g.add_edge_weighted((12, 15), while_not_cond.clone()).unwrap();
-	g.add_edge_weighted((15,22),write_x_div_y).unwrap();
-	g.add_edge_weighted((22,3),Read(lv_z)).unwrap();
+	g.add_edge_weighted((0,4,DeclareVariable(mut_int, "i"))).unwrap();
+	g.add_edge_weighted((5,1,Drop("i"))).unwrap();
+	g.add_edge_weighted((4,6,DeclareVariable(mut_int, "x"))).unwrap();
+	g.add_edge_weighted((7,5,Drop("x"))).unwrap();
+	g.add_edge_weighted((6,8,DeclareVariable(mut_int, "y"))).unwrap();
+	g.add_edge_weighted((9,7,Drop("y"))).unwrap();
+	g.add_edge_weighted((8,10,DeclareVariable(mut_int, "z"))).unwrap();
+	g.add_edge_weighted((11,9,Drop("z"))).unwrap();
+	g.add_edge_weighted((10,2,DeclareArray(mut_int, "A", 10))).unwrap();
+	g.add_edge_weighted((3,11,Drop("A"))).unwrap();
+	g.add_edge_weighted((13,14,Read(lv_a_i.clone()))).unwrap();
+	g.add_edge_weighted((14,2,inc_i.clone())).unwrap();
+	g.add_edge_weighted((2, 13, while_cond.clone())).unwrap();
+	g.add_edge_weighted((2, 12, while_not_cond.clone())).unwrap();
+	g.add_edge_weighted((18, 20, x_ass_x_plus_a_i)).unwrap();
+	g.add_edge_weighted((20,17,inc_i.clone())).unwrap();
+	g.add_edge_weighted((19,21,inc_i.clone())).unwrap();
+	g.add_edge_weighted((21,15,Skip)).unwrap();
+	g.add_edge_weighted((16, 19, if_not_cond)).unwrap();
+	g.add_edge_weighted((16, 18, if_cond)).unwrap();
+	g.add_edge_weighted((17,12,inc_y.clone())).unwrap();
+	g.add_edge_weighted((12, 16, while_cond.clone())).unwrap();
+	g.add_edge_weighted((12, 15, while_not_cond.clone())).unwrap();
+	g.add_edge_weighted((15,22,write_x_div_y)).unwrap();
+	g.add_edge_weighted((22,3,Read(lv_z))).unwrap();
 	g
 }
 
@@ -117,7 +117,7 @@ pub const P2: &'static str =
 	";
 
 pub fn p2_program_graph<'a>() -> ProgramGraph<'a> {
-	let mut g = ProgramGraph::empty_graph();
+	let mut g = ProgramGraph::new();
 	for i in 0..10{
 		g.add_vertex(i).unwrap();
 	}
@@ -135,16 +135,16 @@ pub fn p2_program_graph<'a>() -> ProgramGraph<'a> {
 	
 	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
 	
-	g.add_edge_weighted((0,4),DeclareVariable(mut_int, "x")).unwrap();
-	g.add_edge_weighted((5,1),Drop("x")).unwrap();
-	g.add_edge_weighted((4,2),DeclareVariable(mut_int, "y")).unwrap();
-	g.add_edge_weighted((3,5),Drop("y")).unwrap();
-	g.add_edge_weighted((2,6),Assign(lv_y.clone(), e_minus_1.clone())).unwrap();
-	g.add_edge_weighted((6,7),Assign(lv_x.clone(), e_0.clone())).unwrap();
-	g.add_edge_weighted((8,9),Assign(lv_x.clone(), e_x_plus_1.clone())).unwrap();
-	g.add_edge_weighted((9,7),Read(lv_y.clone())).unwrap();
-	g.add_edge_weighted((7,8),Condition(e_y_lt_0.clone())).unwrap();
-	g.add_edge_weighted((7,3),Condition(e_not_y_lt_0.clone())).unwrap();
+	g.add_edge_weighted((0,4,DeclareVariable(mut_int, "x"))).unwrap();
+	g.add_edge_weighted((5,1,Drop("x"))).unwrap();
+	g.add_edge_weighted((4,2,DeclareVariable(mut_int, "y"))).unwrap();
+	g.add_edge_weighted((3,5,Drop("y"))).unwrap();
+	g.add_edge_weighted((2,6,Assign(lv_y.clone(), e_minus_1.clone()))).unwrap();
+	g.add_edge_weighted((6,7,Assign(lv_x.clone(), e_0.clone()))).unwrap();
+	g.add_edge_weighted((8,9,Assign(lv_x.clone(), e_x_plus_1.clone()))).unwrap();
+	g.add_edge_weighted((9,7,Read(lv_y.clone()))).unwrap();
+	g.add_edge_weighted((7,8,Condition(e_y_lt_0.clone()))).unwrap();
+	g.add_edge_weighted((7,3,Condition(e_not_y_lt_0.clone()))).unwrap();
 	
 	g
 }
@@ -164,7 +164,7 @@ pub const P3: &'static str =
 	";
 
 pub fn p3_program_graph<'a>() -> ProgramGraph<'a> {
-	let mut g = ProgramGraph::empty_graph();
+	let mut g = ProgramGraph::new();
 	for i in 0..14{
 		g.add_vertex(i).unwrap();
 	}
@@ -185,20 +185,20 @@ pub fn p3_program_graph<'a>() -> ProgramGraph<'a> {
 	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
 	let const_int_p = Type{is_pointer: true, is_mutable: false, basic_type: Int};
 	
-	g.add_edge_weighted((0,4),DeclareVariable(mut_int, "x")).unwrap();
-	g.add_edge_weighted((5,1),Drop("x")).unwrap();
-	g.add_edge_weighted((4,6),DeclareVariable(mut_int, "y")).unwrap();
-	g.add_edge_weighted((7,5),Drop("y")).unwrap();
-	g.add_edge_weighted((6,2),DeclareVariable(const_int_p, "p")).unwrap();
-	g.add_edge_weighted((3,7),Drop("p")).unwrap();
-	g.add_edge_weighted((2,8),Read(lv_x.clone())).unwrap();
-	g.add_edge_weighted((8,9),Read(lv_y.clone())).unwrap();
-	g.add_edge_weighted((9,10),Assign(lv_p.clone(), e_brw_const_x.clone())).unwrap();
-	g.add_edge_weighted((12,13),Write(e_deref_p.clone())).unwrap();
-	g.add_edge_weighted((13,11),Assign(lv_p.clone(), e_brw_const_y.clone())).unwrap();
-	g.add_edge_weighted((10,11),Condition(e_not_x_lt_1.clone())).unwrap();
-	g.add_edge_weighted((10,12),Condition(e_x_lt_1.clone())).unwrap();
-	g.add_edge_weighted((11,3),Write(e_deref_p.clone())).unwrap();
+	g.add_edge_weighted((0,4,DeclareVariable(mut_int, "x"))).unwrap();
+	g.add_edge_weighted((5,1,Drop("x"))).unwrap();
+	g.add_edge_weighted((4,6,DeclareVariable(mut_int, "y"))).unwrap();
+	g.add_edge_weighted((7,5,Drop("y"))).unwrap();
+	g.add_edge_weighted((6,2,DeclareVariable(const_int_p, "p"))).unwrap();
+	g.add_edge_weighted((3,7,Drop("p"))).unwrap();
+	g.add_edge_weighted((2,8,Read(lv_x.clone()))).unwrap();
+	g.add_edge_weighted((8,9,Read(lv_y.clone()))).unwrap();
+	g.add_edge_weighted((9,10,Assign(lv_p.clone(), e_brw_const_x.clone()))).unwrap();
+	g.add_edge_weighted((12,13,Write(e_deref_p.clone()))).unwrap();
+	g.add_edge_weighted((13,11,Assign(lv_p.clone(), e_brw_const_y.clone()))).unwrap();
+	g.add_edge_weighted((10,11,Condition(e_not_x_lt_1.clone()))).unwrap();
+	g.add_edge_weighted((10,12,Condition(e_x_lt_1.clone()))).unwrap();
+	g.add_edge_weighted((11,3,Write(e_deref_p.clone()))).unwrap();
 	g
 }
 
@@ -212,7 +212,7 @@ pub const PROBLEM_1: &'static str =
 	";
 pub fn problem_1_program_graph<'a>() -> ProgramGraph<'a>
 {
-	let mut g = ProgramGraph::empty_graph();
+	let mut g = ProgramGraph::new();
 	for i in 0..=7{
 		g.add_vertex(i).unwrap();
 	}
@@ -229,13 +229,13 @@ pub fn problem_1_program_graph<'a>() -> ProgramGraph<'a>
 	let mut_int = Type{is_pointer: false, is_mutable: true, basic_type: Int};
 	let mut_int_p = Type{is_pointer: true, is_mutable: true, basic_type: Int};
 	
-	g.add_edge_weighted((0,4),DeclareVariable(mut_int, "data")).unwrap();
-	g.add_edge_weighted((5,1),Drop("data")).unwrap();
-	g.add_edge_weighted((4,2),DeclareVariable(mut_int_p, "r")).unwrap();
-	g.add_edge_weighted((3,5),Drop("r")).unwrap();
-	g.add_edge_weighted((2,6),Assign(l_r, e_brw_mut_data)).unwrap();
-	g.add_edge_weighted((6,7),Assign(l_deref_r, e_4.clone())).unwrap();
-	g.add_edge_weighted((7,3),Assign(l_data, e_1)).unwrap();
+	g.add_edge_weighted((0,4,DeclareVariable(mut_int, "data"))).unwrap();
+	g.add_edge_weighted((5,1,Drop("data"))).unwrap();
+	g.add_edge_weighted((4,2,DeclareVariable(mut_int_p, "r"))).unwrap();
+	g.add_edge_weighted((3,5,Drop("r"))).unwrap();
+	g.add_edge_weighted((2,6,Assign(l_r, e_brw_mut_data))).unwrap();
+	g.add_edge_weighted((6,7,Assign(l_deref_r, e_4.clone()))).unwrap();
+	g.add_edge_weighted((7,3,Assign(l_data, e_1))).unwrap();
 	g
 }
 

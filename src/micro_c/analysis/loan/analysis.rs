@@ -15,7 +15,9 @@ use progysis::{
 		TFSpace, PowerSet, Analysis, SubLattice, Bottom
 	},
 };
-use graphene::core::EdgeWeightedGraph;
+use graphene::core::{
+	Graph,trait_aliases::IntoFromIter
+};
 use std::{
 	hash::Hash,
 	marker::PhantomData,
@@ -30,10 +32,12 @@ pub struct LoanAnalysis<'a>{
 	pha: PhantomData<&'a u8>
 }
 
-impl<'a,G,L> Analysis<G,L> for LoanAnalysis<'a>
+impl<'a,G,L> Analysis<'a,G,L> for LoanAnalysis<'a>
 	where
-		G: EdgeWeightedGraph<EdgeWeight = Action<'a>>,
+		G: Graph<'a,EdgeWeight = Action<'a>>,
 		G::Vertex: Hash,
+		G::EdgeIter: IntoFromIter<(G::Vertex,G::Vertex,&'a G::EdgeWeight)>,
+		G::EdgeMutIter: IntoFromIter<(G::Vertex,G::Vertex,&'a mut G::EdgeWeight)>,
 		L: Bottom + SubLattice<LoanPowerSet<'a>> + SubLattice<LifetimeTFSpace<'a>>,
 {
 	type Lattice = LoanPowerSet<'a>;

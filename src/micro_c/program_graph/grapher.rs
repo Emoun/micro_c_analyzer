@@ -9,7 +9,7 @@ use micro_c::{
 use std::rc::Rc;
 use graphene::{
 	core::{
-		BaseGraph,EdgeWeightedGraph
+		Graph, ManualGraph
 	},
 	common::AdjListGraph
 };
@@ -36,7 +36,7 @@ impl<'a> ProgramGrapher<'a>
 	
 	pub fn new() -> Self
 	{
-		let graph= AdjListGraph::empty_graph();
+		let graph= AdjListGraph::new();
 		let start_state_stack = Vec::new();
 		let end_state_stack = Vec::new();
 		let break_stack = Vec::new();
@@ -211,8 +211,8 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 		let qp = self.break_stack.pop()
 			.expect("Exit variable declaration expected drop end state on stack, found none");
 		
-		self.graph.add_edge_weighted((qs,qt),Action::DeclareVariable(t,name)).unwrap();
-		self.graph.add_edge_weighted((qd,qp),Action::Drop(name)).unwrap();
+		self.graph.add_edge_weighted((qs,qt,Action::DeclareVariable(t,name))).unwrap();
+		self.graph.add_edge_weighted((qd,qp,Action::Drop(name))).unwrap();
 	}
 	fn exit_declaration_array(&mut self, t:Type, name: &'a str, len: i32){
 		let (qs,qt) = self.pop_stack("Exit array declaration");
@@ -221,8 +221,8 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 		let qp = self.break_stack.pop()
 			.expect("Exit array declaration expected drop end state on stack, found none");
 		
-		self.graph.add_edge_weighted((qs,qt),Action::DeclareArray(t,name,len)).unwrap();
-		self.graph.add_edge_weighted((qd,qp),Action::Drop(name)).unwrap();
+		self.graph.add_edge_weighted((qs,qt,Action::DeclareArray(t,name,len))).unwrap();
+		self.graph.add_edge_weighted((qd,qp,Action::Drop(name))).unwrap();
 	}
 	
 	fn exit_statement(&mut self, _: Rc<Statement<'a>>){
@@ -231,7 +231,7 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 	fn exit_statement_assign(&mut self, lvalue: Rc<Lvalue<'a>>, expr: Rc<Expression<'a>>){
 		let (qs,qt) = self.pop_stack("Exit assign statement");
 		
-		self.graph.add_edge_weighted((qs,qt),Action::Assign(lvalue, expr)).unwrap();
+		self.graph.add_edge_weighted((qs,qt,Action::Assign(lvalue, expr))).unwrap();
 		
 	}
 	fn exit_statement_if_else(&mut self,
@@ -244,15 +244,15 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 		if let Some(_) = if_false{
 			//add else branch
 			let q_else = self.start_state_stack.pop().expect("Exit if statement expected start state of else branch, found none.");
-			self.graph.add_edge_weighted((qs, q_else), Action::Condition(false_cond)).unwrap();
+			self.graph.add_edge_weighted((qs, q_else, Action::Condition(false_cond))).unwrap();
 		}else{
 			// No else branch
-			self.graph.add_edge_weighted((qs,qt), Action::Condition(false_cond)).unwrap();
+			self.graph.add_edge_weighted((qs,qt, Action::Condition(false_cond))).unwrap();
 		}
 		
 		// Add true branch
 		let q_true = self.start_state_stack.pop().expect("Exit if statement expected start state of true branch, found none.");
-		self.graph.add_edge_weighted((qs, q_true), Action::Condition(cond)).unwrap();
+		self.graph.add_edge_weighted((qs, q_true, Action::Condition(cond))).unwrap();
 	}
 	fn exit_statement_while(&mut self, cond: Rc<Expression<'a>>, _: Rc<Block<'a>>)
 	{
@@ -266,26 +266,26 @@ impl<'a> AstVisitor<'a> for ProgramGrapher<'a>{
 		let false_cond = Rc::new(Expression::Unary(UnaryOperator::Not, cond.clone()));
 		
 		// add body branch
-		self.graph.add_edge_weighted((qs, q_body), Action::Condition(cond)).unwrap();
+		self.graph.add_edge_weighted((qs, q_body, Action::Condition(cond))).unwrap();
 		// add false branch
-		self.graph.add_edge_weighted((qs, qt), Action::Condition(false_cond)).unwrap();
+		self.graph.add_edge_weighted((qs, qt, Action::Condition(false_cond))).unwrap();
 	}
 	fn exit_statement_read(&mut self, lvalue: Rc<Lvalue<'a>>){
 		let (qs,qt) = self.pop_stack("Exit read statement");
-		self.graph.add_edge_weighted((qs,qt), Action::Read(lvalue)).unwrap();
+		self.graph.add_edge_weighted((qs,qt, Action::Read(lvalue))).unwrap();
 	}
 	fn exit_statement_write(&mut self, value: Rc<Expression<'a>>){
 		let (qs,qt) = self.pop_stack("Exit write statement");
-		self.graph.add_edge_weighted((qs,qt), Action::Write(value)).unwrap();
+		self.graph.add_edge_weighted((qs,qt, Action::Write(value))).unwrap();
 	}
 	fn exit_statement_break(&mut self){
 		let (qs,_) = self.pop_stack("Exit break statement");
 		let q_break = *self.break_stack.last().expect("Exit break statement expected break state on stakc, found none");
-		self.graph.add_edge_weighted((qs, q_break), Action::Skip).unwrap();
+		self.graph.add_edge_weighted((qs, q_break, Action::Skip)).unwrap();
 	}
 	fn exit_statement_continue(&mut self){
 		let (qs,_) = self.pop_stack("Exit continue statement");
 		let q_continue = *self.break_stack.last().expect("Exit continue statement expected break state on stakc, found none");
-		self.graph.add_edge_weighted((qs, q_continue), Action::Skip).unwrap();
+		self.graph.add_edge_weighted((qs, q_continue, Action::Skip)).unwrap();
 	}
 }

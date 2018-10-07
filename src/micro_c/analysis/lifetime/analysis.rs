@@ -8,7 +8,7 @@ use progysis::{
 	}
 };
 use graphene::core::{
-	EdgeWeightedGraph,
+	Graph,trait_aliases::IntoFromIter
 };
 use micro_c::{
 	Expression, UnaryOperator, Action, Lvalue,
@@ -47,10 +47,12 @@ pub struct LifetimeAnalysis<'a>{
 	pha: PhantomData<&'a u8>
 }
 
-impl<'a,G,L> Analysis<G,L> for LifetimeAnalysis<'a>
+impl<'a,G,L> Analysis<'a,G,L> for LifetimeAnalysis<'a>
 	where
-		G: EdgeWeightedGraph<EdgeWeight = Action<'a>>,
+		G: Graph<'a,EdgeWeight = Action<'a>>,
 		G::Vertex: Hash,
+		G::EdgeIter: IntoFromIter<(G::Vertex,G::Vertex,&'a G::EdgeWeight)>,
+		G::EdgeMutIter: IntoFromIter<(G::Vertex,G::Vertex,&'a mut G::EdgeWeight)>,
 		L: Bottom + SubLattice<LifetimeTFSpace<'a>> + SubLattice<LiveVariables<'a>>,
 {
 	type Lattice = LifetimeTFSpace<'a>;

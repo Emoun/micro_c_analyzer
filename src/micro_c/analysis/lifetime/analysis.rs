@@ -7,10 +7,8 @@ use progysis::{
 		HashPowerSet, HashTFSpace,
 	}
 };
-use graphene::core::{
-	Graph,trait_aliases::IntoFromIter
-};
-use micro_c::{
+use graphene::core::{Graph, Directed};
+use crate::micro_c::{
 	Expression, UnaryOperator, Action, Lvalue,
 	analysis::liveness::LiveVariables
 };
@@ -21,7 +19,7 @@ use std::{
 
 pub type LifetimePowerSet<'a> = HashPowerSet<&'a str>;
 
-pub type LifetimeTFSpace<'a> = HashTFSpace<'a, &'a str, LifetimePowerSet<'a>>;
+pub type LifetimeTFSpace<'a> = HashTFSpace<&'a str, LifetimePowerSet<'a>>;
 
 pub fn lifetimes<'a>(state: &LifetimeTFSpace<'a>, e: &Expression<'a>) -> LifetimePowerSet<'a>
 {
@@ -47,12 +45,10 @@ pub struct LifetimeAnalysis<'a>{
 	pha: PhantomData<&'a u8>
 }
 
-impl<'a,G,L> Analysis<'a,G,L> for LifetimeAnalysis<'a>
+impl<'a,G,L> Analysis<G,L> for LifetimeAnalysis<'a>
 	where
-		G: Graph<'a,EdgeWeight = Action<'a>>,
+		G: Graph<Directedness=Directed, EdgeWeight = Action<'a>>,
 		G::Vertex: Hash,
-		G::EdgeIter: IntoFromIter<(G::Vertex,G::Vertex,&'a G::EdgeWeight)>,
-		G::EdgeMutIter: IntoFromIter<(G::Vertex,G::Vertex,&'a mut G::EdgeWeight)>,
 		L: Bottom + SubLattice<LifetimeTFSpace<'a>> + SubLattice<LiveVariables<'a>>,
 {
 	type Lattice = LifetimeTFSpace<'a>;

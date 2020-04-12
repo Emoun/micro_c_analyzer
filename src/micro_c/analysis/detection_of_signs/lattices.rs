@@ -9,4 +9,4 @@ pub enum Sign{
 
 pub type SignsPowerSet = HashPowerSet<Sign>;
 
-pub type SignsTFSpace<'a> = HashTFSpace<'a,&'a str, SignsPowerSet>;
+pub type SignsTFSpace<'a> = HashTFSpace<&'a str, SignsPowerSet>;

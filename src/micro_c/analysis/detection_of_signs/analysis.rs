@@ -2,11 +2,8 @@
 use progysis::core::{
 	Analysis, SubLattice, Bottom
 };
-use graphene::core::{
-	Graph,
-	trait_aliases::IntoFromIter,
-};
-use micro_c::{
+use graphene::core::{Graph, Directed};
+use crate::micro_c::{
 	Action,Lvalue,
 	analysis::detection_of_signs::*
 };
@@ -19,12 +16,10 @@ pub struct DetectionOfSignsAnalysis<'a>{
 	pha: PhantomData<&'a u8>
 }
 
-impl<'a,G,L> Analysis<'a,G,L> for DetectionOfSignsAnalysis<'a>
+impl<'a,G,L> Analysis<G,L> for DetectionOfSignsAnalysis<'a>
 	where
-		G: Graph<'a,EdgeWeight = Action<'a>>,
+		G: Graph<Directedness=Directed, EdgeWeight = Action<'a>>,
 		G::Vertex: Hash,
-		G::EdgeIter: IntoFromIter<(G::Vertex,G::Vertex,&'a G::EdgeWeight)>,
-		G::EdgeMutIter: IntoFromIter<(G::Vertex,G::Vertex,&'a mut G::EdgeWeight)>,
 		L: Bottom + SubLattice<SignsTFSpace<'a>>,
 {
 	type Lattice = SignsTFSpace<'a>;

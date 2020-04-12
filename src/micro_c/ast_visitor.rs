@@ -1,5 +1,5 @@
 #![allow(unused_variables)]
-use micro_c::{
+use crate::micro_c::{
 	Block, Declaration,
 	Statement, Statement::*,
 	Expression, Expression::*,

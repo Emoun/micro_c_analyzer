@@ -4,7 +4,7 @@ use progysis::{
 		PowerSet, Bottom
 	},
 };
-use micro_c::{
+use crate::micro_c::{
 	Expression,
 	analysis::detection_of_signs::{
 		Sign, SignsPowerSet, SignsTFSpace, evaluate

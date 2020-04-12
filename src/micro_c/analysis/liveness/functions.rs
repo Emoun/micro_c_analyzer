@@ -1,5 +1,5 @@
 
-use micro_c::{
+use crate::micro_c::{
 	Expression, Lvalue, Action,
 	analysis::liveness::LiveVariables
 };
@@ -38,7 +38,7 @@ mod free_variables_tests {
 	use super::*;
 	use super::Expression::*;
 	use std::rc::Rc;
-	use micro_c::{
+	use crate::micro_c::{
 		BinaryOperator, UnaryOperator
 	};
 	

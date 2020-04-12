@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-use micro_c::{
+use crate::micro_c::{
 	AstVisitor,
 	Block, Declaration,
 	Statement,Expression,
@@ -9,29 +9,26 @@ use micro_c::{
 use std::rc::Rc;
 use graphene::{
 	core::{
-		Graph, ManualGraph
+		Graph
 	},
 	common::AdjListGraph
 };
-
+use graphene::core::property::{NewVertex, AddEdge};
 
 
 pub struct ProgramGrapher<'a>{
 	graph: ProgramGraph<'a>,
-	next_vertex: u32,
-	start_state_stack: Vec<u32>,
-	end_state_stack: Vec<u32>,
-	break_stack: Vec<u32>,
-	continue_stack: Vec<u32>,
+	start_state_stack: Vec<<ProgramGraph<'a> as Graph>::Vertex>,
+	end_state_stack: Vec<<ProgramGraph<'a> as Graph>::Vertex>,
+	break_stack: Vec<<ProgramGraph<'a> as Graph>::Vertex>,
+	continue_stack: Vec<<ProgramGraph<'a> as Graph>::Vertex>,
 }
 
 impl<'a> ProgramGrapher<'a>
 {
-	pub fn add_state(&mut self) -> u32
+	pub fn add_state(&mut self) -> <ProgramGraph<'a> as Graph>::Vertex
 	{
-		self.graph.add_vertex(self.next_vertex).unwrap();
-		self.next_vertex += 1;
-		self.next_vertex - 1
+		self.graph.new_vertex().unwrap()
 	}
 	
 	pub fn new() -> Self
@@ -44,7 +41,6 @@ impl<'a> ProgramGrapher<'a>
 		
 		let mut result = ProgramGrapher{
 			graph,
-			next_vertex: 0,
 			start_state_stack,
 			end_state_stack,
 			break_stack,
@@ -60,7 +56,7 @@ impl<'a> ProgramGrapher<'a>
 		result
 	}
 
-	fn pop_stack(&mut self, call_msg: &'a str) -> (u32, u32)
+	fn pop_stack(&mut self, call_msg: &'a str) -> (<ProgramGraph<'a> as Graph>::Vertex, <ProgramGraph<'a> as Graph>::Vertex)
 	{
 		let m_start = &format!("{} expected start state on stack, found none", call_msg);
 		let m_end = &format!("{} expected end state on stack, found none", call_msg);
@@ -70,7 +66,7 @@ impl<'a> ProgramGrapher<'a>
 		)
 	}
 	
-	fn peek_stack(&mut self, call_msg: &'a str) -> (u32, u32)
+	fn peek_stack(&mut self, call_msg: &'a str) -> (<ProgramGraph<'a> as Graph>::Vertex, <ProgramGraph<'a> as Graph>::Vertex)
 	{
 		let m_start = &format!("{} expected start state on stack, found none", call_msg);
 		let m_end = &format!("{} expected end state on stack, found none", call_msg);

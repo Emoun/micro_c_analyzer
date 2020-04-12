@@ -1,7 +1,7 @@
 
 use std::rc::Rc;
 
-use micro_c::{
+use crate::micro_c::{
 	Expression,
 	Type, Lvalue
 };

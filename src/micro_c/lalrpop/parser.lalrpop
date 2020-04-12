@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use std::rc::Rc;
-use micro_c::{
+use crate::micro_c::{
     Block, Declaration, Statement, Expression, Type, BasicType, BinaryOperator,
     UnaryOperator, Lvalue
 };

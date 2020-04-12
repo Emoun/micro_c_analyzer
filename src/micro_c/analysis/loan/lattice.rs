@@ -1,5 +1,5 @@
 
-use micro_c::{
+use crate::micro_c::{
 	Expression
 };
 use progysis::{
